@@ -99,11 +99,43 @@
       color: var(--ink);
     }
 
+    .controls {
+      display: inline-flex;
+      gap: 10px;
+      align-items: center;
+      margin-left: auto;
+    }
+
+    .mode-switch {
+      display: inline-flex;
+      gap: 4px;
+      padding: 3px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.65);
+    }
+
+    .mode-btn {
+      border: none;
+      background: transparent;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      color: var(--muted);
+      cursor: pointer;
+      transition: color 120ms ease, background-color 120ms ease, box-shadow 120ms ease;
+    }
+
+    .mode-btn.is-active {
+      color: var(--ink);
+      background: #fffdf8;
+      box-shadow: 0 6px 14px rgba(31, 42, 36, 0.12);
+    }
+
     .size-controls {
       display: inline-flex;
       gap: 8px;
       align-items: center;
-      margin-left: auto;
     }
 
     .size-btn {
@@ -385,9 +417,15 @@
         <div class="stat">准确率：<strong id="accuracy">0%</strong></div>
         <div class="stat">进度：<strong id="progressInfo">0/0</strong></div>
         <div class="status" id="status" data-state="idle">等待输入</div>
-        <div class="size-controls">
-          <button class="size-btn" id="sizeDown" type="button" aria-label="缩小">小</button>
-          <button class="size-btn" id="sizeUp" type="button" aria-label="放大">大</button>
+        <div class="controls">
+          <div class="mode-switch" role="group" aria-label="字根模式">
+            <button class="mode-btn is-active" id="modeAll" type="button" aria-pressed="true">全字根</button>
+            <button class="mode-btn" id="modeMerged" type="button" aria-pressed="false">归并字根</button>
+          </div>
+          <div class="size-controls">
+            <button class="size-btn" id="sizeDown" type="button" aria-label="缩小">小</button>
+            <button class="size-btn" id="sizeUp" type="button" aria-label="放大">大</button>
+          </div>
         </div>
       </div>
     </header>
@@ -417,6 +455,10 @@
   <script>
     const ROOTS = [{"root": "疒", "code": "ab"}, {"root": "丁", "code": "ad"}, {"root": "㇆", "code": "ae"}, {"root": "乛", "code": "ae"}, {"root": "", "code": "ae"}, {"root": "⺄", "code": "ae"}, {"root": "㇗", "code": "ae"}, {"root": "乚", "code": "ae"}, {"root": "ヿ", "code": "ae"}, {"root": "ㄋ", "code": "ae"}, {"root": "ㄅ", "code": "ae"}, {"root": "", "code": "ae"}, {"root": "丰", "code": "af"}, {"root": "", "code": "af"}, {"root": "龶", "code": "af"}, {"root": "", "code": "af"}, {"root": "缶", "code": "af"}, {"root": "", "code": "af"}, {"root": "鬼", "code": "ag"}, {"root": "乙", "code": "ai"}, {"root": "六", "code": "al"}, {"root": "耒", "code": "al"}, {"root": "门", "code": "am"}, {"root": "皿", "code": "am"}, {"root": "片", "code": "ap"}, {"root": "爿", "code": "ap"}, {"root": "丬", "code": "ap"}, {"root": "", "code": "ap"}, {"root": "", "code": "ap"}, {"root": "", "code": "ap"}, {"root": "舌", "code": "as"}, {"root": "", "code": "as"}, {"root": "未", "code": "aw"}, {"root": "弓", "code": "bg"}, {"root": "乂", "code": "bi"}, {"root": "㐅", "code": "bi"}, {"root": "", "code": "bi"}, {"root": "彐", "code": "bj"}, {"root": "", "code": "bj"}, {"root": "", "code": "bj"}, {"root": "彑", "code": "bj"}, {"root": "", "code": "bj"}, {"root": "", "code": "bk"}, {"root": "", "code": "bk"}, {"root": "卵", "code": "bl"}, {"root": "卯", "code": "bm"}, {"root": "", "code": "bm"}, {"root": "面", "code": "bm"}, {"root": "女", "code": "bn"}, {"root": "氏", "code": "bs"}, {"root": "聿", "code": "bv"}, {"root": "肀", "code": "bv"}, {"root": "", "code": "bv"}, {"root": "", "code": "bv"}, {"root": "", "code": "bv"}, {"root": "云", "code": "by"}, {"root": "", "code": "by"}, {"root": "不", "code": "cb"}, {"root": "虫", "code": "cc"}, {"root": "", "code": "cc"}, {"root": "飞", "code": "cf"}, {"root": "古", "code": "cg"}, {"root": "火", "code": "ch"}, {"root": "", "code": "ch"}, {"root": "", "code": "ch"}, {"root": "", "code": "ch"}, {"root": "灬", "code": "ch"}, {"root": "支", "code": "ci"}, {"root": "及", "code": "cj"}, {"root": "尸", "code": "cs"}, {"root": "", "code": "cs"}, {"root": "", "code": "cs"}, {"root": "业", "code": "cy"}, {"root": "口", "code": "dk"}, {"root": "〇", "code": "dk"}, {"root": "里", "code": "dl"}, {"root": "民", "code": "dm"}, {"root": "黾", "code": "dm"}, {"root": "无", "code": "du"}, {"root": "旡", "code": "du"}, {"root": "由", "code": "dy"}, {"root": "干", "code": "eg"}, {"root": "见", "code": "ej"}, {"root": "木", "code": "em"}, {"root": "朩", "code": "em"}, {"root": "欠", "code": "eq"}, {"root": "彡", "code": "es"}, {"root": "", "code": "es"}, {"root": "𠂉", "code": "et"}, {"root": "穴", "code": "ex"}, {"root": "", "code": "ex"}, {"root": "也", "code": "ey"}, {"root": "㡀", "code": "fb"}, {"root": "辰", "code": "fc"}, {"root": "骨", "code": "fg"}, {"root": "冎", "code": "fg"}, {"root": "一", "code": "fi"}, {"root": "㇀", "code": "fi"}, {"root": "且", "code": "fq"}, {"root": "示", "code": "fs"}, {"root": "礻", "code": "fs"}, {"root": "亡", "code": "fw"}, {"root": "亾", "code": "fw"}, {"root": "歹", "code": "gd"}, {"root": "歺", "code": "gd"}, {"root": "", "code": "gd"}, {"root": "高", "code": "gg"}, {"root": "", "code": "gg"}, {"root": "", "code": "gg"}, {"root": "", "code": "gg"}, {"root": "句", "code": "gj"}, {"root": "丨", "code": "gs"}, {"root": "亅", "code": "gs"}, {"root": "士", "code": "gs"}, {"root": "土", "code": "gt"}, {"root": "韦", "code": "gw"}, {"root": "羊", "code": "gy"}, {"root": "⺷", "code": "gy"}, {"root": "⺶", "code": "gy"}, {"root": "", "code": "gy"}, {"root": "芈", "code": "gy"}, {"root": "八", "code": "hb"}, {"root": "丷", "code": "hb"}, {"root": "", "code": "hb"}, {"root": "䒑", "code": "hb"}, {"root": "", "code": "hb"}, {"root": "癶", "code": "hb"}, {"root": "", "code": "hb"}, {"root": "夫", "code": "hf"}, {"root": "谷", "code": "hg"}, {"root": "", "code": "hg"}, {"root": "子", "code": "hi"}, {"root": "夂", "code": "hi"}, {"root": "夊", "code": "hi"}, {"root": "", "code": "hi"}, {"root": "攵", "code": "hp"}, {"root": "攴", "code": "hp"}, {"root": "壴", "code": "hu"}, {"root": "", "code": "hu"}, {"root": "心", "code": "hx"}, {"root": "忄", "code": "hx"}, {"root": "⺗", "code": "hx"}, {"root": "册", "code": "ic"}, {"root": "", "code": "ic"}, {"root": "", "code": "ic"}, {"root": "丶", "code": "id"}, {"root": "㇏", "code": "id"}, {"root": "艮", "code": "ig"}, {"root": "", "code": "ig"}, {"root": "丩", "code": "ij"}, {"root": "立", "code": "il"}, {"root": "", "code": "il"}, {"root": "舟", "code": "io"}, {"root": "糸", "code": "is"}, {"root": "纟", "code": "is"}, {"root": "予", "code": "iv"}, {"root": "乡", "code": "ix"}, {"root": "幺", "code": "iy"}, {"root": "斗", "code": "jd"}, {"root": "亼", "code": "ji"}, {"root": "亽", "code": "ji"}, {"root": "仑", "code": "jl"}, {"root": "侖", "code": "jl"}, {"root": "人", "code": "jr"}, {"root": "亻", "code": "jr"}, {"root": "豕", "code": "js"}, {"root": "", "code": "js"}, {"root": "入", "code": "ju"}, {"root": "寸", "code": "kc"}, {"root": "亥", "code": "kh"}, {"root": "㠯", "code": "ki"}, {"root": "九", "code": "kj"}, {"root": "母", "code": "km"}, {"root": "水", "code": "ks"}, {"root": "氵", "code": "ks"}, {"root": "⺍", "code": "ks"}, {"root": "", "code": "ks"}, {"root": "氺", "code": "ks"}, {"root": "", "code": "ks"}, {"root": "", "code": "ks"}, {"root": "", "code": "ks"}, {"root": "厶", "code": "ks"}, {"root": "龴", "code": "ks"}, {"root": "", "code": "ks"}, {"root": "毋", "code": "ku"}, {"root": "毌", "code": "ku"}, {"root": "艹", "code": "lc"}, {"root": "廾", "code": "lc"}, {"root": "丌", "code": "lc"}, {"root": "艸", "code": "lc"}, {"root": "齿", "code": "lc"}, {"root": "而", "code": "le"}, {"root": "方", "code": "lf"}, {"root": "廿", "code": "ln"}, {"root": "龷", "code": "ln"}, {"root": "千", "code": "lq"}, {"root": "生", "code": "ls"}, {"root": "卅", "code": "ls"}, {"root": "", "code": "ls"}, {"root": "夕", "code": "lx"}, {"root": "卌", "code": "lx"}, {"root": "牙", "code": "ly"}, {"root": "巴", "code": "mb"}, {"root": "大", "code": "md"}, {"root": "二", "code": "me"}, {"root": "光", "code": "mg"}, {"root": "", "code": "mg"}, {"root": "户", "code": "mh"}, {"root": "", "code": "mh"}, {"root": "豸", "code": "mi"}, {"root": "冂", "code": "mk"}, {"root": "凵", "code": "mk"}, {"root": "⺆", "code": "mk"}, {"root": "", "code": "mk"}, {"root": "", "code": "mk"}, {"root": "两", "code": "ml"}, {"root": "犬", "code": "mq"}, {"root": "犭", "code": "mq"}, {"root": "石", "code": "ms"}, {"root": "甫", "code": "nf"}, {"root": "鬲", "code": "ng"}, {"root": "黄", "code": "nh"}, {"root": "勹", "code": "nk"}, {"root": "匚", "code": "nk"}, {"root": "", "code": "nk"}, {"root": "コ", "code": "nk"}, {"root": "马", "code": "nm"}, {"root": "十", "code": "ns"}, {"root": "𠂇", "code": "ns"}, {"root": "", "code": "ns"}, {"root": "戊", "code": "nu"}, {"root": "", "code": "nu"}, {"root": "戉", "code": "nu"}, {"root": "王", "code": "nw"}, {"root": "辛", "code": "nx"}, {"root": "贝", "code": "ob"}, {"root": "川", "code": "oc"}, {"root": "", "code": "oc"}, {"root": "", "code": "oc"}, {"root": "巛", "code": "oc"}, {"root": "巜", "code": "oc"}, {"root": "自", "code": "oi"}, {"root": "几", "code": "oj"}, {"root": "⺇", "code": "oj"}, {"root": "", "code": "oj"}, {"root": "日", "code": "or"}, {"root": "曰", "code": "or"}, {"root": "⺜", "code": "or"}, {"root": "", "code": "or"}, {"root": "矢", "code": "os"}, {"root": "尤", "code": "oy"}, {"root": "尢", "code": "oy"}, {"root": "长", "code": "pc"}, {"root": "镸", "code": "pc"}, {"root": "刀", "code": "pd"}, {"root": "〢", "code": "pd"}, {"root": "刂", "code": "pd"}, {"root": "リ", "code": "pd"}, {"root": "", "code": "pd"}, {"root": "", "code": "pd"}, {"root": "", "code": "pd"}, {"root": "", "code": "pd"}, {"root": "儿", "code": "pe"}, {"root": "", "code": "pe"}, {"root": "", "code": "pe"}, {"root": "", "code": "pe"}, {"root": "戈", "code": "pg"}, {"root": "", "code": "pg"}, {"root": "黑", "code": "ph"}, {"root": "", "code": "ph"}, {"root": "弋", "code": "pi"}, {"root": "臼", "code": "pj"}, {"root": "", "code": "pj"}, {"root": "米", "code": "pm"}, {"root": "", "code": "pm"}, {"root": "鼠", "code": "ps"}, {"root": "", "code": "ps"}, {"root": "足", "code": "pu"}, {"root": "⻊", "code": "pu"}, {"root": "行", "code": "px"}, {"root": "走", "code": "pz"}, {"root": "臣", "code": "qc"}, {"root": "", "code": "qc"}, {"root": "耳", "code": "qe"}, {"root": "井", "code": "qj"}, {"root": "", "code": "qj"}, {"root": "老", "code": "ql"}, {"root": "耂", "code": "ql"}, {"root": "目", "code": "qm"}, {"root": "", "code": "qm"}, {"root": "牛", "code": "qn"}, {"root": "牜", "code": "qn"}, {"root": "⺧", "code": "qn"}, {"root": "齐", "code": "qq"}, {"root": "食", "code": "qs"}, {"root": "饣", "code": "qs"}, {"root": "田", "code": "qt"}, {"root": "非", "code": "rf"}, {"root": "之", "code": "ri"}, {"root": "巾", "code": "rj"}, {"root": "囗（框）", "code": "rk"}, {"root": "了", "code": "rl"}, {"root": "皮", "code": "rp"}, {"root": "七", "code": "rq"}, {"root": "", "code": "rq"}, {"root": "", "code": "rq"}, {"root": "殳", "code": "rs"}, {"root": "竹", "code": "ru"}, {"root": "⺮", "code": "ru"}, {"root": "", "code": "ru"}, {"root": "瓦", "code": "rw"}, {"root": "又", "code": "ry"}, {"root": "ス", "code": "ry"}, {"root": "屮", "code": "sc"}, {"root": "", "code": "sc"}, {"root": "", "code": "sc"}, {"root": "", "code": "sc"}, {"root": "", "code": "sc"}, {"root": "各", "code": "sg"}, {"root": "止", "code": "si"}, {"root": "", "code": "si"}, {"root": "", "code": "si"}, {"root": "龰", "code": "si"}, {"root": "甲", "code": "sj"}, {"root": "力", "code": "sl"}, {"root": "尚", "code": "ss"}, {"root": "", "code": "ss"}, {"root": "龸", "code": "ss"}, {"root": "言", "code": "sy"}, {"root": "讠", "code": "sy"}, {"root": "阝", "code": "te"}, {"root": "弗", "code": "tf"}, {"root": "𢎨", "code": "tf"}, {"root": "𠂔", "code": "tf"}, {"root": "革", "code": "tg"}, {"root": "衣", "code": "ti"}, {"root": "衤", "code": "ti"}, {"root": "", "code": "ti"}, {"root": "", "code": "ti"}, {"root": "", "code": "ti"}, {"root": "斤", "code": "tj"}, {"root": "", "code": "tj"}, {"root": "龙", "code": "tl"}, {"root": "丿", "code": "tp"}, {"root": "㇒", "code": "tp"}, {"root": "疋", "code": "ts"}, {"root": "𤴓", "code": "ts"}, {"root": "⺪", "code": "ts"}, {"root": "三", "code": "ts"}, {"root": "雨", "code": "tv"}, {"root": "⻗", "code": "tv"}, {"root": "用", "code": "ty"}, {"root": "", "code": "ty"}, {"root": "白", "code": "ub"}, {"root": "辶", "code": "uc"}, {"root": "工", "code": "ug"}, {"root": "隹", "code": "ui"}, {"root": "手", "code": "us"}, {"root": "扌", "code": "us"}, {"root": "龵", "code": "us"}, {"root": "", "code": "us"}, {"root": "", "code": "us"}, {"root": "", "code": "us"}, {"root": "", "code": "us"}, {"root": "廴", "code": "uy"}, {"root": "匕", "code": "vb"}, {"root": "", "code": "vb"}, {"root": "", "code": "vb"}, {"root": "", "code": "vb"}, {"root": "已", "code": "vi"}, {"root": "己", "code": "vj"}, {"root": "", "code": "vj"}, {"root": "㐄", "code": "vk"}, {"root": "", "code": "vk"}, {"root": "毛", "code": "vm"}, {"root": "乃", "code": "vn"}, {"root": "", "code": "vn"}, {"root": "气", "code": "vq"}, {"root": "禸", "code": "vr"}, {"root": "⽱", "code": "vr"}, {"root": "山", "code": "vs"}, {"root": "巳", "code": "vs"}, {"root": "文", "code": "vw"}, {"root": "西", "code": "vx"}, {"root": "覀", "code": "vx"}, {"root": "月", "code": "vy"}, {"root": "⺝", "code": "vy"}, {"root": "", "code": "vy"}, {"root": "", "code": "vy"}, {"root": "", "code": "vy"}, {"root": "乍", "code": "wa"}, {"root": "冫", "code": "wb"}, {"root": "", "code": "wb"}, {"root": "⺀", "code": "wb"}, {"root": "彳", "code": "wc"}, {"root": "亍", "code": "wc"}, {"root": "宀", "code": "wg"}, {"root": "冖", "code": "wg"}, {"root": "龟", "code": "wg"}, {"root": "兔", "code": "wt"}, {"root": "", "code": "wt"}, {"root": "五", "code": "wu"}, {"root": "鱼", "code": "wv"}, {"root": "𩵋", "code": "wv"}, {"root": "象", "code": "wx"}, {"root": "页", "code": "wy"}, {"root": "頁", "code": "wy"}, {"root": "", "code": "wy"}, {"root": "", "code": "wy"}, {"root": "厂", "code": "xc"}, {"root": "⺁", "code": "xc"}, {"root": "⺈", "code": "xd"}, {"root": "", "code": "xd"}, {"root": "", "code": "xd"}, {"root": "广", "code": "xg"}, {"root": "禾", "code": "xh"}, {"root": "", "code": "xh"}, {"root": "鹿", "code": "xl"}, {"root": "鸟", "code": "xn"}, {"root": "", "code": "xn"}, {"root": "束", "code": "xs"}, {"root": "乌", "code": "xu"}, {"root": "音", "code": "xy"}, {"root": "爪", "code": "ya"}, {"root": "爫", "code": "ya"}, {"root": "卜", "code": "yb"}, {"root": "⺊", "code": "yb"}, {"root": "车", "code": "yc"}, {"root": "", "code": "yc"}, {"root": "車", "code": "yc"}, {"root": "瓜", "code": "yg"}, {"root": "至", "code": "yi"}, {"root": "曲", "code": "yq"}, {"root": "四", "code": "ys"}, {"root": "罒", "code": "ys"}, {"root": "小", "code": "yx"}, {"root": "⺌", "code": "yx"}, {"root": "", "code": "yx"}, {"root": "𡭔", "code": "yx"}, {"root": "酉", "code": "yy"}, {"root": "豆", "code": "zd"}, {"root": "甘", "code": "zg"}, {"root": "", "code": "zg"}, {"root": "虎", "code": "zh"}, {"root": "虍", "code": "zh"}, {"root": "金", "code": "zj"}, {"root": "钅", "code": "zj"}, {"root": "", "code": "zj"}, {"root": "卩", "code": "zj"}, {"root": "ㄗ", "code": "zj"}, {"root": "⺋", "code": "zj"}, {"root": "", "code": "zj"}, {"root": "可", "code": "zk"}, {"root": "", "code": "zk"}, {"root": "麻", "code": "zm"}, {"root": "身", "code": "zs"}, {"root": "㐆", "code": "zs"}, {"root": "亠", "code": "zt"}, {"root": "羽", "code": "zv"}, {"root": "习", "code": "zx"}];
 
+    const ROOTS_VARIANTS = ROOTS.map(normalizeRootItem);
+    const ROOTS_MERGED_RAW = [{"root": "\u7592", "code": "ab"}, {"root": "\u4e01", "code": "ad"}, {"root": "\u31c6 \u4e5b\ue4cc\u2e84\u31d7\u4e5a\u30ff\u310b\u3105\ue4cd", "code": "ae"}, {"root": "\u4e30 \ue415\u9fb6\ue905", "code": "af"}, {"root": "\u7f36 \ue589", "code": "af"}, {"root": "\u9b3c", "code": "ag"}, {"root": "\u4e59", "code": "ai"}, {"root": "\u516d", "code": "al"}, {"root": "\u8012", "code": "al"}, {"root": "\u95e8", "code": "am"}, {"root": "\u76bf", "code": "am"}, {"root": "\u7247 \u723f\u4e2c\ue495\ue407\ue408", "code": "ap"}, {"root": "\u820c \ue429", "code": "as"}, {"root": "\u672a", "code": "aw"}, {"root": "\u5f13", "code": "bg"}, {"root": "\u4e42 \u3405\ue4b6", "code": "bi"}, {"root": "\u5f50 \ue4bd\ue459\u5f51\ue4bc", "code": "bj"}, {"root": "\ue479 \ue478", "code": "bk"}, {"root": "\u5375", "code": "bl"}, {"root": "\u536f \ue580", "code": "bm"}, {"root": "\u9762", "code": "bm"}, {"root": "\u5973", "code": "bn"}, {"root": "\u6c0f", "code": "bs"}, {"root": "\u807f \u8080\ue4c0\ue4c1\ue4bf", "code": "bv"}, {"root": "\u4e91 \ue4b5", "code": "by"}, {"root": "\u4e0d", "code": "cb"}, {"root": "\u866b \ue56b", "code": "cc"}, {"root": "\u98de", "code": "cf"}, {"root": "\u53e4", "code": "cg"}, {"root": "\u706b \ue4aa\ue4a8\ue4a9\u706c", "code": "ch"}, {"root": "\u652f", "code": "ci"}, {"root": "\u53ca", "code": "cj"}, {"root": "\u5c38 \ue42c\ue42a", "code": "cs"}, {"root": "\u4e1a", "code": "cy"}, {"root": "\u53e3 \u3007", "code": "dk"}, {"root": "\u91cc", "code": "dl"}, {"root": "\u6c11", "code": "dm"}, {"root": "\u9efe", "code": "dm"}, {"root": "\u65e0 \u65e1", "code": "du"}, {"root": "\u7531", "code": "dy"}, {"root": "\u5e72", "code": "eg"}, {"root": "\u89c1", "code": "ej"}, {"root": "\u6728 \u6729", "code": "em"}, {"root": "\u6b20", "code": "eq"}, {"root": "\u5f61 \ue4c4", "code": "es"}, {"root": "\ud840\udc89", "code": "et"}, {"root": "\u7a74 \ue400", "code": "ex"}, {"root": "\u4e5f", "code": "ey"}, {"root": "\u3840", "code": "fb"}, {"root": "\u8fb0", "code": "fc"}, {"root": "\u9aa8 \u518e", "code": "fg"}, {"root": "\u4e00 \u31c0", "code": "fi"}, {"root": "\u4e14", "code": "fq"}, {"root": "\u793a \u793b", "code": "fs"}, {"root": "\u4ea1 \u4ebe", "code": "fw"}, {"root": "\u6b79 \u6b7a\ue4dd", "code": "gd"}, {"root": "\u9ad8 \ue440\ue441\ue443", "code": "gg"}, {"root": "\u53e5", "code": "gj"}, {"root": "\u4e28 \u4e85", "code": "gs"}, {"root": "\u58eb", "code": "gs"}, {"root": "\u571f", "code": "gt"}, {"root": "\u97e6", "code": "gw"}, {"root": "\u7f8a \u2eb7\u2eb6\ue5ac\u8288", "code": "gy"}, {"root": "\u516b \u4e37\ue8eb\u4491\ue40e\u7676\ue524", "code": "hb"}, {"root": "\u592b", "code": "hf"}, {"root": "\u8c37 \ue5ad", "code": "hg"}, {"root": "\u5b50", "code": "hi"}, {"root": "\u5902 \u590a\ue8be", "code": "hi"}, {"root": "\u6535 \u6534", "code": "hp"}, {"root": "\u58f4 \ue82d", "code": "hu"}, {"root": "\u5fc3 \u5fc4\u2e97", "code": "hx"}, {"root": "\u518c \ue43a\ue43e", "code": "ic"}, {"root": "\u4e36 \u31cf", "code": "id"}, {"root": "\u826e \ue4d0", "code": "ig"}, {"root": "\u4e29", "code": "ij"}, {"root": "\u7acb \ue446", "code": "il"}, {"root": "\u821f", "code": "io"}, {"root": "\u7cf8 \u7e9f", "code": "is"}, {"root": "\u4e88", "code": "iv"}, {"root": "\u4e61", "code": "ix"}, {"root": "\u5e7a", "code": "iy"}, {"root": "\u6597", "code": "jd"}, {"root": "\u4ebc \u4ebd", "code": "ji"}, {"root": "\u4ed1 \u4f96", "code": "jl"}, {"root": "\u4eba \u4ebb", "code": "jr"}, {"root": "\u8c55 \ue460", "code": "js"}, {"root": "\u5165", "code": "ju"}, {"root": "\u5bf8", "code": "kc"}, {"root": "\u4ea5", "code": "kh"}, {"root": "\u382f", "code": "ki"}, {"root": "\u4e5d", "code": "kj"}, {"root": "\u6bcd", "code": "km"}, {"root": "\u6c34 \u6c35\u2e8d\ue48a\u6c3a\ue48b\ue48c\ue48d", "code": "ks"}, {"root": "\u53b6 \u9fb4\ue433", "code": "ks"}, {"root": "\u6bcb \u6bcc", "code": "ku"}, {"root": "\u8279 \u5efe\u4e0c\u8278", "code": "lc"}, {"root": "\u9f7f", "code": "lc"}, {"root": "\u800c", "code": "le"}, {"root": "\u65b9", "code": "lf"}, {"root": "\u5eff \u9fb7", "code": "ln"}, {"root": "\u5343", "code": "lq"}, {"root": "\u751f", "code": "ls"}, {"root": "\u5345 \ue410", "code": "ls"}, {"root": "\u5915", "code": "lx"}, {"root": "\u534c", "code": "lx"}, {"root": "\u7259", "code": "ly"}, {"root": "\u5df4", "code": "mb"}, {"root": "\u5927", "code": "md"}, {"root": "\u4e8c", "code": "me"}, {"root": "\u5149 \ue856", "code": "mg"}, {"root": "\u6237 \ue405", "code": "mh"}, {"root": "\u8c78", "code": "mi"}, {"root": "\u5182 \u51f5\u2e86\ue452\ue402", "code": "mk"}, {"root": "\u4e24", "code": "ml"}, {"root": "\u72ac \u72ad", "code": "mq"}, {"root": "\u77f3", "code": "ms"}, {"root": "\u752b", "code": "nf"}, {"root": "\u9b32", "code": "ng"}, {"root": "\u9ec4", "code": "nh"}, {"root": "\u52f9", "code": "nk"}, {"root": "\u531a \ue432\u30b3", "code": "nk"}, {"root": "\u9a6c", "code": "nm"}, {"root": "\u5341 \ud840\udc87\ue431", "code": "ns"}, {"root": "\u620a \ue44f\u6209", "code": "nu"}, {"root": "\u738b", "code": "nw"}, {"root": "\u8f9b", "code": "nx"}, {"root": "\u8d1d", "code": "ob"}, {"root": "\u5ddd \ue4e5\ue490\u5ddb\u5ddc", "code": "oc"}, {"root": "\u81ea", "code": "oi"}, {"root": "\u51e0 \u2e87\ue915", "code": "oj"}, {"root": "\u65e5 \u66f0\u2e9c\ue477", "code": "or"}, {"root": "\u77e2", "code": "os"}, {"root": "\u5c24 \u5c22", "code": "oy"}, {"root": "\u957f \u9578", "code": "pc"}, {"root": "\u5200 \u3022\u5202\u30ea\ue449\ue44d\ue44b\ue44c", "code": "pd"}, {"root": "\u513f \ue489\ue80e\ue863", "code": "pe"}, {"root": "\u6208 \ue450", "code": "pg"}, {"root": "\u9ed1 \ue8c3", "code": "ph"}, {"root": "\u5f0b", "code": "pi"}, {"root": "\u81fc \ue4c2", "code": "pj"}, {"root": "\u7c73 \ue5bc", "code": "pm"}, {"root": "\u9f20 \ue462", "code": "ps"}, {"root": "\u8db3 \u2eca", "code": "pu"}, {"root": "\u884c", "code": "px"}, {"root": "\u8d70", "code": "pz"}, {"root": "\u81e3 \ue472", "code": "qc"}, {"root": "\u8033", "code": "qe"}, {"root": "\u4e95 \ue417", "code": "qj"}, {"root": "\u8001 \u8002", "code": "ql"}, {"root": "\u76ee \ue858", "code": "qm"}, {"root": "\u725b \u725c\u2ea7", "code": "qn"}, {"root": "\u9f50", "code": "qq"}, {"root": "\u98df \u9963", "code": "qs"}, {"root": "\u7530", "code": "qt"}, {"root": "\u975e", "code": "rf"}, {"root": "\u4e4b", "code": "ri"}, {"root": "\u5dfe", "code": "rj"}, {"root": "\u56d7(\u6846)", "code": "rk"}, {"root": "\u4e86", "code": "rl"}, {"root": "\u76ae", "code": "rp"}, {"root": "\u4e03 \ue439\ue438", "code": "rq"}, {"root": "\u6bb3", "code": "rs"}, {"root": "\u7af9 \u2eae\ue4a1", "code": "ru"}, {"root": "\u74e6", "code": "rw"}, {"root": "\u53c8 \u30b9", "code": "ry"}, {"root": "\u5c6e \ue413\ue4cf\ue414\ue830", "code": "sc"}, {"root": "\u5404", "code": "sg"}, {"root": "\u6b62 \ue870\ue46f\u9fb0", "code": "si"}, {"root": "\u7532", "code": "sj"}, {"root": "\u529b", "code": "sl"}, {"root": "\u5c1a \ue4a6\u9fb8", "code": "ss"}, {"root": "\u8a00 \u8ba0", "code": "sy"}, {"root": "\u961d", "code": "te"}, {"root": "\u5f17 \ud848\udfa8\ud840\udc94", "code": "tf"}, {"root": "\u9769", "code": "tg"}, {"root": "\u8863 \u8864\ue4c5\ue4c8\ue4c7", "code": "ti"}, {"root": "\u65a4 \ue455", "code": "tj"}, {"root": "\u9f99", "code": "tl"}, {"root": "\u4e3f \u31d2", "code": "tp"}, {"root": "\u758b \ud853\udd13\u2eaa", "code": "ts"}, {"root": "\u4e09", "code": "ts"}, {"root": "\u96e8 \u2ed7", "code": "tv"}, {"root": "\u7528 \ue47c", "code": "ty"}, {"root": "\u767d", "code": "ub"}, {"root": "\u8fb6", "code": "uc"}, {"root": "\u5de5", "code": "ug"}, {"root": "\u96b9", "code": "ui"}, {"root": "\u624b \u624c\u9fb5\ue4e9\ue42f\ue430\ue4ba", "code": "us"}, {"root": "\u5ef4", "code": "uy"}, {"root": "\u5315 \ue498\ue497\ue5c5", "code": "vb"}, {"root": "\u5df2", "code": "vi"}, {"root": "\u5df1 \ue4d5", "code": "vj"}, {"root": "\u3404 \ue46b", "code": "vk"}, {"root": "\u6bdb", "code": "vm"}, {"root": "\u4e43 \ue592", "code": "vn"}, {"root": "\u6c14", "code": "vq"}, {"root": "\u79b8 \u2f71", "code": "vr"}, {"root": "\u5c71", "code": "vs"}, {"root": "\u5df3", "code": "vs"}, {"root": "\u6587", "code": "vw"}, {"root": "\u897f \u8980", "code": "vx"}, {"root": "\u6708 \u2e9d\ue41c\ue422\ue420", "code": "vy"}, {"root": "\u4e4d", "code": "wa"}, {"root": "\u51ab \ue48f\u2e80", "code": "wb"}, {"root": "\u5f73 \u4e8d", "code": "wc"}, {"root": "\u5b80 \u5196", "code": "wg"}, {"root": "\u9f9f", "code": "wg"}, {"root": "\u5154 \ue464", "code": "wt"}, {"root": "\u4e94", "code": "wu"}, {"root": "\u9c7c \ud867\udd4b", "code": "wv"}, {"root": "\u8c61", "code": "wx"}, {"root": "\u9875 \u9801\ue532\ue4de", "code": "wy"}, {"root": "\u5382 \u2e81", "code": "xc"}, {"root": "\u2e88 \ue488\ue4e4", "code": "xd"}, {"root": "\u5e7f", "code": "xg"}, {"root": "\u79be \ue748", "code": "xh"}, {"root": "\u9e7f", "code": "xl"}, {"root": "\u9e1f \ue45e", "code": "xn"}, {"root": "\u675f", "code": "xs"}, {"root": "\u4e4c", "code": "xu"}, {"root": "\u97f3", "code": "xy"}, {"root": "\u722a \u722b", "code": "ya"}, {"root": "\u535c \u2e8a", "code": "yb"}, {"root": "\u8f66 \ue46e\u8eca", "code": "yc"}, {"root": "\u74dc", "code": "yg"}, {"root": "\u81f3", "code": "yi"}, {"root": "\u66f2", "code": "yq"}, {"root": "\u56db \u7f52", "code": "ys"}, {"root": "\u5c0f \u2e8c\ue4b4\ud846\udf54", "code": "yx"}, {"root": "\u9149", "code": "yy"}, {"root": "\u8c46", "code": "zd"}, {"root": "\u7518 \ue499", "code": "zg"}, {"root": "\u864e \u864d", "code": "zh"}, {"root": "\u91d1 \u9485\ue456", "code": "zj"}, {"root": "\u5369 \u3117\u2e8b\ue4d1", "code": "zj"}, {"root": "\u53ef \ue8e0", "code": "zk"}, {"root": "\u9ebb", "code": "zm"}, {"root": "\u8eab \u3406", "code": "zs"}, {"root": "\u4ea0", "code": "zt"}, {"root": "\u7fbd", "code": "zv"}, {"root": "\u4e60", "code": "zx"}];
+    const ROOTS_MERGED = ROOTS_MERGED_RAW.map(normalizeRootItem);
+
     const rootChar = document.getElementById('rootChar');
     const codeInput = document.getElementById('codeInput');
     const inputWrap = document.getElementById('inputWrap');
@@ -427,6 +469,8 @@
     const correctEl = document.getElementById('correct');
     const accuracyEl = document.getElementById('accuracy');
     const progressInfoEl = document.getElementById('progressInfo');
+    const modeAllBtn = document.getElementById('modeAll');
+    const modeMergedBtn = document.getElementById('modeMerged');
     const sizeDownBtn = document.getElementById('sizeDown');
     const sizeUpBtn = document.getElementById('sizeUp');
 
@@ -436,6 +480,8 @@
     let correct = 0;
     let locked = false;
     let buffer = '';
+    let mode = 'all';
+    let activeRoots = ROOTS_VARIANTS;
 
     function shuffle(array) {
       for (let i = array.length - 1; i > 0; i--) {
@@ -446,7 +492,7 @@
     }
 
     function buildOrder() {
-      order = shuffle([...ROOTS.keys()]);
+      order = shuffle([...activeRoots.keys()]);
       currentIndex = 0;
     }
 
@@ -469,6 +515,14 @@
       rootStyle.setProperty('--box-font-mobile', `${preset.boxMobileFont}px`);
       if (sizeDownBtn) sizeDownBtn.disabled = sizeIndex === 0;
       if (sizeUpBtn) sizeUpBtn.disabled = sizeIndex === sizePresets.length - 1;
+    }
+
+    function normalizeRootLabel(label) {
+      return label.replace(/囗\(框\)/g, '囗（框）');
+    }
+
+    function normalizeRootItem(item) {
+      return { root: normalizeRootLabel(item.root), code: item.code };
     }
 
     function normalizeInput(value) {
@@ -506,7 +560,7 @@
 
     function triggerWrong() {
       if (locked) return;
-      const item = ROOTS[order[currentIndex]];
+      const item = activeRoots[order[currentIndex]];
       locked = true;
       total += 1;
       applyWrong(item);
@@ -538,6 +592,34 @@
       accuracyEl.textContent = total ? `${Math.round((correct / total) * 100)}%` : '0%';
     }
 
+    function resetStats() {
+      total = 0;
+      correct = 0;
+      updateStats();
+    }
+
+    function updateModeButtons() {
+      const isMerged = mode === 'merged';
+      if (modeAllBtn) {
+        modeAllBtn.classList.toggle('is-active', !isMerged);
+        modeAllBtn.setAttribute('aria-pressed', String(!isMerged));
+      }
+      if (modeMergedBtn) {
+        modeMergedBtn.classList.toggle('is-active', isMerged);
+        modeMergedBtn.setAttribute('aria-pressed', String(isMerged));
+      }
+    }
+
+    function setMode(nextMode) {
+      if (nextMode === mode) return;
+      mode = nextMode;
+      activeRoots = mode === 'merged' ? ROOTS_MERGED : ROOTS_VARIANTS;
+      resetStats();
+      buildOrder();
+      renderQuestion();
+      updateModeButtons();
+    }
+
     function updateProgress() {
       if (!progressInfoEl) return;
       const totalItems = order.length || 0;
@@ -565,7 +647,7 @@
       if (currentIndex >= order.length) {
         buildOrder();
       }
-      const item = ROOTS[order[currentIndex]];
+      const item = activeRoots[order[currentIndex]];
       rootChar.textContent = item.root;
       inputWrap.classList.remove('is-error');
       hideReveal();
@@ -579,7 +661,7 @@
 
     function submitAnswer(value) {
       if (locked) return;
-      const item = ROOTS[order[currentIndex]];
+      const item = activeRoots[order[currentIndex]];
       const code = value.slice(0, 2);
       if (code.length < 2) return;
 
@@ -643,6 +725,11 @@
       codeInput.focus();
     });
 
+    if (modeAllBtn && modeMergedBtn) {
+      modeAllBtn.addEventListener('click', () => setMode('all'));
+      modeMergedBtn.addEventListener('click', () => setMode('merged'));
+    }
+
     if (sizeDownBtn && sizeUpBtn) {
       sizeDownBtn.addEventListener('click', () => {
         sizeIndex = Math.max(0, sizeIndex - 1);
@@ -654,6 +741,7 @@
       });
     }
     applySize();
+    updateModeButtons();
 
     buildOrder();
     renderQuestion();
