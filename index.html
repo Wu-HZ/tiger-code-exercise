@@ -592,12 +592,6 @@
       accuracyEl.textContent = total ? `${Math.round((correct / total) * 100)}%` : '0%';
     }
 
-    function resetStats() {
-      total = 0;
-      correct = 0;
-      updateStats();
-    }
-
     function updateModeButtons() {
       const isMerged = mode === 'merged';
       if (modeAllBtn) {
@@ -614,7 +608,6 @@
       if (nextMode === mode) return;
       mode = nextMode;
       activeRoots = mode === 'merged' ? ROOTS_MERGED : ROOTS_VARIANTS;
-      resetStats();
       buildOrder();
       renderQuestion();
       updateModeButtons();
