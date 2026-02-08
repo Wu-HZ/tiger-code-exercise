@@ -948,6 +948,7 @@
             <button class="mode-btn is-active" id="reviewOff" type="button" aria-pressed="true">普通</button>
             <button class="mode-btn" id="reviewOn" type="button" aria-pressed="false">复习</button>
             <button class="mode-btn" id="reviewFollow" type="button" aria-pressed="false">跟打</button>
+            <button class="mode-btn" id="reviewWrong" type="button" aria-pressed="false">错题</button>
           </div>
         </div>
       </div>
@@ -1003,6 +1004,7 @@
     const reviewOnBtn = document.getElementById('reviewOn');
     const reviewLearnBtn = document.getElementById('reviewLearn');
     const reviewFollowBtn = document.getElementById('reviewFollow');
+    const reviewWrongBtn = document.getElementById('reviewWrong');
     const uiShowBtn = document.getElementById('uiShow');
     const uiHalfBtn = document.getElementById('uiHalf');
     const uiFullBtn = document.getElementById('uiFull');
@@ -1033,6 +1035,8 @@
     let reviewQueue = [];
     const reviewState = new Map();
     const completedSet = new Set();
+    const wrongByMode = { all: new Set(), merged: new Set() };
+    let wrongSet = wrongByMode.all;
     const learningSeenByMode = { all: new Set(), merged: new Set() };
     let learningSeenSet = learningSeenByMode.all;
     const REVIEW_STEPS = [2, 5, 10];
@@ -1095,6 +1099,39 @@
     }
 
     function pickNextItem() {
+      if (practiceMode === 'wrong') {
+        if (!wrongSet.size) {
+          currentItemIndex = order[0] ?? 0;
+          currentIsReview = false;
+          return;
+        }
+        if (reviewEnabled) {
+          const dueIdx = getDueReview();
+          if (dueIdx !== null) {
+            currentItemIndex = dueIdx;
+            currentIsReview = true;
+            return;
+          }
+          if (reviewQueue.length > 0) {
+            let bestIndex = 0;
+            let bestDue = reviewQueue[0].dueAt;
+            for (let i = 1; i < reviewQueue.length; i += 1) {
+              if (reviewQueue[i].dueAt < bestDue) {
+                bestDue = reviewQueue[i].dueAt;
+                bestIndex = i;
+              }
+            }
+            const [entry] = reviewQueue.splice(bestIndex, 1);
+            currentItemIndex = entry.idx;
+            currentIsReview = true;
+            return;
+          }
+        }
+        const wrongList = Array.from(wrongSet);
+        currentItemIndex = wrongList[Math.floor(Math.random() * wrongList.length)];
+        currentIsReview = false;
+        return;
+      }
       advanceToNextNew();
 
       if (reviewEnabled) {
@@ -1203,6 +1240,10 @@
       return Array.from(completedSet);
     }
 
+    function getWrongIndices() {
+      return Array.from(wrongSet);
+    }
+
     function mapCompletedToMerged(completedVariants) {
       const mergedSet = new Set();
       completedVariants.forEach((vIdx) => {
@@ -1283,7 +1324,16 @@
       showReveal(item.code);
     }
 
+    function renderWrongEmpty() {
+      rootChar.textContent = '—';
+      inputWrap.classList.remove('is-error');
+      clearBuffer();
+      showReveal('暂无错题');
+      locked = true;
+    }
+
     function markWrong(rootIndex) {
+      wrongSet.add(rootIndex);
       if (reviewEnabled) {
         completedSet.delete(rootIndex);
         const state = reviewState.get(rootIndex) || { stage: 0 };
@@ -1399,10 +1449,15 @@
         reviewFollowBtn.classList.toggle('is-active', active);
         reviewFollowBtn.setAttribute('aria-pressed', String(active));
       }
+      if (reviewWrongBtn) {
+        const active = practiceMode === 'wrong';
+        reviewWrongBtn.classList.toggle('is-active', active);
+        reviewWrongBtn.setAttribute('aria-pressed', String(active));
+      }
     }
 
     function syncPracticeState(nextMode) {
-      const nextReviewEnabled = nextMode === 'normal' || nextMode === 'learning';
+      const nextReviewEnabled = nextMode === 'normal' || nextMode === 'learning' || nextMode === 'wrong';
       const nextLearningMode = nextMode === 'learning';
       if (reviewEnabled !== nextReviewEnabled) {
         reviewEnabled = nextReviewEnabled;
@@ -1420,7 +1475,11 @@
       syncPracticeState(nextMode);
       updatePracticeButtons();
       locked = false;
-      renderCurrent();
+      if (practiceMode === 'wrong') {
+        renderQuestion();
+      } else {
+        renderCurrent();
+      }
     }
 
     function updateUiButtons() {
@@ -1527,6 +1586,7 @@
       mode = nextMode;
       activeRoots = mode === 'merged' ? ROOTS_MERGED : ROOTS_VARIANTS;
       learningSeenSet = mode === 'merged' ? learningSeenByMode.merged : learningSeenByMode.all;
+      wrongSet = mode === 'merged' ? wrongByMode.merged : wrongByMode.all;
       completedSet.clear();
       targetCompleted.forEach((idx) => completedSet.add(idx));
       clearReviewState();
@@ -1563,6 +1623,11 @@
     }
 
     function renderCurrent(options = {}) {
+      if (practiceMode === 'wrong' && wrongSet.size === 0) {
+        renderWrongEmpty();
+        return;
+      }
+      locked = false;
       const item = activeRoots[currentItemIndex];
       rootChar.textContent = item.root;
       inputWrap.classList.remove('is-error');
@@ -1601,7 +1666,7 @@
           hideReveal();
         }
         flashStatus('正确 ✓', 'good');
-        if (!currentIsReview) {
+        if (!currentIsReview && practiceMode !== 'wrong') {
           currentIndex += 1;
         }
         locked = false;
@@ -1660,11 +1725,12 @@
       modeMergedBtn.addEventListener('click', () => setMode('merged'));
     }
 
-    if (reviewOffBtn && reviewOnBtn && reviewLearnBtn && reviewFollowBtn) {
+    if (reviewOffBtn && reviewOnBtn && reviewLearnBtn && reviewFollowBtn && reviewWrongBtn) {
       reviewOffBtn.addEventListener('click', () => setPracticeMode('normal'));
       reviewOnBtn.addEventListener('click', () => setPracticeMode('review'));
       reviewLearnBtn.addEventListener('click', () => setPracticeMode('learning'));
       reviewFollowBtn.addEventListener('click', () => setPracticeMode('follow'));
+      reviewWrongBtn.addEventListener('click', () => setPracticeMode('wrong'));
     }
 
     if (uiShowBtn && uiHalfBtn && uiFullBtn) {
