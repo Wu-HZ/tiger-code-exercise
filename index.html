@@ -923,13 +923,13 @@
           <label class="palette-select" aria-label="配色">
             <select id="paletteSelect" aria-label="配色">
               <option value="auto">Auto</option>
+              <option value="one">One</option>
               <option value="solarized">Solarized</option>
               <option value="nord">Nord</option>
               <option value="catppuccin">Catppuccin</option>
               <option value="gruvbox">Gruvbox</option>
               <option value="tokyonight">Tokyo</option>
               <option value="rosepine">Rose</option>
-              <option value="one">One</option>
             </select>
           </label>
           <div class="mode-switch" role="group" aria-label="界面显示">
@@ -1028,7 +1028,7 @@
     let uiMode = 'show';
     let schemeMode = 'light';
     let paletteMode = 'auto';
-    let activePalette = 'solarized';
+    let activePalette = 'one';
     let autoPaletteBaseIndex = 0;
     let reviewQueue = [];
     const reviewState = new Map();
@@ -1461,7 +1461,7 @@
       }
     }
 
-    const paletteOptions = ['solarized', 'nord', 'catppuccin', 'gruvbox', 'tokyonight', 'rosepine', 'one'];
+    const paletteOptions = ['one', 'solarized', 'nord', 'catppuccin', 'gruvbox', 'tokyonight', 'rosepine'];
 
     function updatePaletteSelect() {
       if (!paletteSelect) return;
