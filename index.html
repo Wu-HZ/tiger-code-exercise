@@ -1029,6 +1029,7 @@
     let schemeMode = 'light';
     let paletteMode = 'auto';
     let activePalette = 'solarized';
+    let autoPaletteBaseIndex = 0;
     let reviewQueue = [];
     const reviewState = new Map();
     const completedSet = new Set();
@@ -1121,6 +1122,7 @@
           return;
         }
         if (completedSet.size >= activeRoots.length) {
+          handleProgressReset();
           completedSet.clear();
           clearReviewState();
         }
@@ -1474,7 +1476,14 @@
 
     function getAutoPalette() {
       const bucket = Math.floor((completedSet.size || 0) / 100);
-      return paletteOptions[bucket % paletteOptions.length];
+      const index = (autoPaletteBaseIndex + bucket) % paletteOptions.length;
+      return paletteOptions[index];
+    }
+
+    function handleProgressReset() {
+      if (paletteMode !== 'auto') return;
+      const currentIndex = paletteOptions.indexOf(activePalette);
+      autoPaletteBaseIndex = currentIndex >= 0 ? currentIndex : 0;
     }
 
     function applyPalette(name) {
@@ -1486,6 +1495,12 @@
 
     function setPaletteMode(nextMode) {
       paletteMode = nextMode;
+      if (paletteMode === 'auto') {
+        const currentIndex = paletteOptions.indexOf(activePalette);
+        const bucket = Math.floor((completedSet.size || 0) / 100);
+        const base = currentIndex - bucket;
+        autoPaletteBaseIndex = ((base % paletteOptions.length) + paletteOptions.length) % paletteOptions.length;
+      }
       const target = paletteMode === 'auto' ? getAutoPalette() : paletteMode;
       applyPalette(target);
       updatePaletteSelect();
