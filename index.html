@@ -466,11 +466,8 @@
 
     <section class="card" id="card">
       <div class="card-meta">
-        <div class="stat stat-attempts">尝试：<strong id="progress">0</strong></div>
-        <div class="stat stat-correct">正确：<strong id="correct">0</strong></div>
         <div class="stat stat-accuracy">准确率：<strong id="accuracy">0%</strong></div>
         <div class="stat">进度：<strong id="progressInfo">0/0</strong></div>
-        <div class="status" id="status" data-state="idle">等待输入</div>
       </div>
       <div class="root-char" id="rootChar">?</div>
       <div class="reveal" id="reveal" aria-live="polite"></div>
@@ -850,7 +847,7 @@
       buffer = normalizeInput(value);
       codeInput.value = buffer;
       renderBoxes(buffer);
-      if (buffer.length > 0 && statusEl.dataset.state !== 'idle') {
+      if (statusEl && buffer.length > 0 && statusEl.dataset.state !== 'idle') {
         setIdleStatus();
       }
       if (buffer.length >= 2) {
@@ -859,9 +856,9 @@
     }
 
     function updateStats() {
-      progressEl.textContent = String(total);
-      correctEl.textContent = String(correct);
-      accuracyEl.textContent = total ? `${Math.round((correct / total) * 100)}%` : '0%';
+      if (progressEl) progressEl.textContent = String(total);
+      if (correctEl) correctEl.textContent = String(correct);
+      if (accuracyEl) accuracyEl.textContent = total ? `${Math.round((correct / total) * 100)}%` : '0%';
     }
 
     function updateModeButtons() {
@@ -949,11 +946,13 @@
     }
 
     function flashStatus(text, state) {
+      if (!statusEl) return;
       statusEl.textContent = text;
       statusEl.dataset.state = state;
     }
 
     function setIdleStatus() {
+      if (!statusEl) return;
       flashStatus('等待输入', 'idle');
     }
 
