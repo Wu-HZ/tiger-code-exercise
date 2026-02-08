@@ -249,6 +249,28 @@
       z-index: 0;
     }
 
+    .card-meta {
+      position: absolute;
+      top: 14px;
+      left: 16px;
+      right: 16px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px 12px;
+      align-items: center;
+      font-size: 12px;
+      color: var(--muted);
+      z-index: 2;
+      text-align: left;
+      pointer-events: none;
+    }
+
+    .card-meta .stat,
+    .card-meta .status {
+      font-size: 12px;
+      min-height: auto;
+    }
+
     .root-box {
       z-index: 1;
       display: grid;
@@ -423,11 +445,6 @@
     <header>
       <div class="title">虎码字根练习</div>
       <div class="top-meta">
-        <div class="stat stat-attempts">尝试：<strong id="progress">0</strong></div>
-        <div class="stat stat-correct">正确：<strong id="correct">0</strong></div>
-        <div class="stat stat-accuracy">准确率：<strong id="accuracy">0%</strong></div>
-        <div class="stat">进度：<strong id="progressInfo">0/0</strong></div>
-        <div class="status" id="status" data-state="idle">等待输入</div>
         <div class="controls">
           <div class="mode-switch" role="group" aria-label="字根模式">
             <button class="mode-btn is-active" id="modeAll" type="button" aria-pressed="true">全字根</button>
@@ -448,6 +465,13 @@
     </header>
 
     <section class="card" id="card">
+      <div class="card-meta">
+        <div class="stat stat-attempts">尝试：<strong id="progress">0</strong></div>
+        <div class="stat stat-correct">正确：<strong id="correct">0</strong></div>
+        <div class="stat stat-accuracy">准确率：<strong id="accuracy">0%</strong></div>
+        <div class="stat">进度：<strong id="progressInfo">0/0</strong></div>
+        <div class="status" id="status" data-state="idle">等待输入</div>
+      </div>
       <div class="root-char" id="rootChar">?</div>
       <div class="reveal" id="reveal" aria-live="polite"></div>
 
