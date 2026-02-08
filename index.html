@@ -83,9 +83,11 @@
       gap: 6px;
     }
     .title {
-      font-family: "PdfLXGWWenKai", "Kaiti SC", "STKaiti", "KaiTi", serif;
+      font-family: "Source Han Sans SC", "Microsoft YaHei", "PingFang SC", "Heiti SC", "Noto Sans CJK SC", sans-serif;
       font-size: clamp(28px, 4vw, 44px);
       letter-spacing: 0.05em;
+      font-weight: 500;
+      font-synthesis: none;
     }
     .subtitle {
       color: var(--muted);
@@ -106,6 +108,7 @@
       flex-wrap: wrap;
       gap: 10px;
       align-items: center;
+      transition: opacity 160ms ease, transform 160ms ease;
     }
 
     .learning-mode .stat-attempts,
@@ -269,6 +272,20 @@
     .ui-full header .controls {
       visibility: hidden;
       pointer-events: none;
+    }
+
+    .ui-half .side-controls,
+    .ui-full .side-controls {
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(-4px);
+    }
+
+    .ui-half .top-meta:hover .side-controls,
+    .ui-full .top-meta:hover .side-controls {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
     }
 
     .ui-full .card-meta {
