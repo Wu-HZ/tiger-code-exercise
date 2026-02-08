@@ -437,6 +437,7 @@
             <button class="mode-btn" id="reviewLearn" type="button" aria-pressed="false">学习</button>
             <button class="mode-btn is-active" id="reviewOff" type="button" aria-pressed="true">普通</button>
             <button class="mode-btn" id="reviewOn" type="button" aria-pressed="false">复习</button>
+            <button class="mode-btn" id="reviewFollow" type="button" aria-pressed="false">跟打</button>
           </div>
           <div class="size-controls">
             <button class="size-btn" id="sizeDown" type="button" aria-label="缩小">小</button>
@@ -491,6 +492,7 @@
     const reviewOffBtn = document.getElementById('reviewOff');
     const reviewOnBtn = document.getElementById('reviewOn');
     const reviewLearnBtn = document.getElementById('reviewLearn');
+    const reviewFollowBtn = document.getElementById('reviewFollow');
     const sizeDownBtn = document.getElementById('sizeDown');
     const sizeUpBtn = document.getElementById('sizeUp');
 
@@ -749,6 +751,11 @@
       applyLearningIntro(item);
     }
 
+    function handleFollowIntro(item) {
+      if (practiceMode !== 'follow') return;
+      showReveal(item.code);
+    }
+
     function markWrong(rootIndex) {
       if (reviewEnabled) {
         completedSet.delete(rootIndex);
@@ -860,10 +867,15 @@
         reviewLearnBtn.classList.toggle('is-active', active);
         reviewLearnBtn.setAttribute('aria-pressed', String(active));
       }
+      if (reviewFollowBtn) {
+        const active = practiceMode === 'follow';
+        reviewFollowBtn.classList.toggle('is-active', active);
+        reviewFollowBtn.setAttribute('aria-pressed', String(active));
+      }
     }
 
     function syncPracticeState(nextMode) {
-      const nextReviewEnabled = nextMode !== 'review';
+      const nextReviewEnabled = nextMode === 'normal' || nextMode === 'learning';
       const nextLearningMode = nextMode === 'learning';
       if (reviewEnabled !== nextReviewEnabled) {
         reviewEnabled = nextReviewEnabled;
@@ -937,6 +949,7 @@
         setIdleStatus();
       }
       handleLearningIntro(item);
+      handleFollowIntro(item);
       turn += 1;
       codeInput.focus();
     }
@@ -955,7 +968,9 @@
         updateStats();
         markCorrect(currentItemIndex);
         inputWrap.classList.remove('is-error');
-        hideReveal();
+        if (practiceMode !== 'follow') {
+          hideReveal();
+        }
         flashStatus('正确 ✓', 'good');
         if (!currentIsReview) {
           currentIndex += 1;
@@ -1016,10 +1031,11 @@
       modeMergedBtn.addEventListener('click', () => setMode('merged'));
     }
 
-    if (reviewOffBtn && reviewOnBtn && reviewLearnBtn) {
+    if (reviewOffBtn && reviewOnBtn && reviewLearnBtn && reviewFollowBtn) {
       reviewOffBtn.addEventListener('click', () => setPracticeMode('normal'));
       reviewOnBtn.addEventListener('click', () => setPracticeMode('review'));
       reviewLearnBtn.addEventListener('click', () => setPracticeMode('learning'));
+      reviewFollowBtn.addEventListener('click', () => setPracticeMode('follow'));
     }
 
     if (sizeDownBtn && sizeUpBtn) {
