@@ -427,6 +427,10 @@
             <button class="mode-btn is-active" id="modeAll" type="button" aria-pressed="true">全字根</button>
             <button class="mode-btn" id="modeMerged" type="button" aria-pressed="false">归并字根</button>
           </div>
+          <div class="mode-switch" role="group" aria-label="遗忘曲线">
+            <button class="mode-btn is-active" id="reviewOff" type="button" aria-pressed="true">普通</button>
+            <button class="mode-btn" id="reviewOn" type="button" aria-pressed="false">复习</button>
+          </div>
           <div class="size-controls">
             <button class="size-btn" id="sizeDown" type="button" aria-label="缩小">小</button>
             <button class="size-btn" id="sizeUp" type="button" aria-label="放大">大</button>
@@ -477,17 +481,27 @@
     const progressInfoEl = document.getElementById('progressInfo');
     const modeAllBtn = document.getElementById('modeAll');
     const modeMergedBtn = document.getElementById('modeMerged');
+    const reviewOffBtn = document.getElementById('reviewOff');
+    const reviewOnBtn = document.getElementById('reviewOn');
     const sizeDownBtn = document.getElementById('sizeDown');
     const sizeUpBtn = document.getElementById('sizeUp');
 
     let order = [];
     let currentIndex = 0;
+    let currentItemIndex = 0;
+    let currentIsReview = false;
     let total = 0;
     let correct = 0;
     let locked = false;
     let buffer = '';
     let mode = 'all';
     let activeRoots = ROOTS_VARIANTS;
+    let reviewEnabled = false;
+    let reviewQueue = [];
+    const reviewState = new Map();
+    const completedSet = new Set();
+    const REVIEW_STEPS = [2, 5, 10];
+    let turn = 0;
 
     function shuffle(array) {
       for (let i = array.length - 1; i > 0; i--) {
@@ -500,6 +514,92 @@
     function buildOrder() {
       order = shuffle([...activeRoots.keys()]);
       currentIndex = 0;
+    }
+
+    function clearReviewState() {
+      reviewQueue = [];
+      reviewState.clear();
+    }
+
+    function removeFromReviewQueue(idx) {
+      reviewQueue = reviewQueue.filter((entry) => entry.idx !== idx);
+    }
+
+    function scheduleReview(idx, stepIndex) {
+      const step = REVIEW_STEPS[stepIndex];
+      if (step === undefined) return;
+      removeFromReviewQueue(idx);
+      const dueAt = turn + step;
+      reviewQueue.push({ idx, dueAt });
+    }
+
+    function getDueReview() {
+      if (!reviewQueue.length) return null;
+      let bestIndex = -1;
+      let bestDue = Infinity;
+      for (let i = 0; i < reviewQueue.length; i += 1) {
+        const entry = reviewQueue[i];
+        if (entry.dueAt <= turn && entry.dueAt < bestDue) {
+          bestDue = entry.dueAt;
+          bestIndex = i;
+        }
+      }
+      if (bestIndex === -1) return null;
+      const [entry] = reviewQueue.splice(bestIndex, 1);
+      return entry.idx;
+    }
+
+    function advanceToNextNew() {
+      while (currentIndex < order.length) {
+        const idx = order[currentIndex];
+        if (!completedSet.has(idx) && !reviewState.has(idx)) {
+          return;
+        }
+        currentIndex += 1;
+      }
+    }
+
+    function pickNextItem() {
+      advanceToNextNew();
+
+      if (reviewEnabled) {
+        const dueIdx = getDueReview();
+        if (dueIdx !== null) {
+          currentItemIndex = dueIdx;
+          currentIsReview = true;
+          return;
+        }
+      }
+
+      if (currentIndex >= order.length) {
+        if (reviewEnabled && reviewQueue.length > 0) {
+          let bestIndex = 0;
+          let bestDue = reviewQueue[0].dueAt;
+          for (let i = 1; i < reviewQueue.length; i += 1) {
+            if (reviewQueue[i].dueAt < bestDue) {
+              bestDue = reviewQueue[i].dueAt;
+              bestIndex = i;
+            }
+          }
+          const [entry] = reviewQueue.splice(bestIndex, 1);
+          currentItemIndex = entry.idx;
+          currentIsReview = true;
+          return;
+        }
+        if (completedSet.size >= activeRoots.length) {
+          completedSet.clear();
+          clearReviewState();
+        }
+        buildOrder();
+        advanceToNextNew();
+      }
+
+      if (currentIndex >= order.length) {
+        currentItemIndex = order[0] ?? 0;
+      } else {
+        currentItemIndex = order[currentIndex];
+      }
+      currentIsReview = false;
     }
 
     const sizePresets = [
@@ -560,7 +660,7 @@
     }
 
     function getCompletedIndices() {
-      return order.slice(0, currentIndex);
+      return Array.from(completedSet);
     }
 
     function mapCompletedToMerged(completedVariants) {
@@ -620,6 +720,43 @@
       revealEl.classList.remove('is-show');
     }
 
+    function markWrong(rootIndex) {
+      if (reviewEnabled) {
+        completedSet.delete(rootIndex);
+        const state = reviewState.get(rootIndex) || { stage: 0 };
+        state.stage = 0;
+        reviewState.set(rootIndex, state);
+        removeFromReviewQueue(rootIndex);
+      }
+      updateProgress();
+    }
+
+    function markCorrect(rootIndex) {
+      if (!reviewEnabled) {
+        completedSet.add(rootIndex);
+        updateProgress();
+        return;
+      }
+
+      const state = reviewState.get(rootIndex);
+      if (!state) {
+        completedSet.add(rootIndex);
+        updateProgress();
+        return;
+      }
+
+      state.stage += 1;
+      if (state.stage >= REVIEW_STEPS.length) {
+        reviewState.delete(rootIndex);
+        removeFromReviewQueue(rootIndex);
+        completedSet.add(rootIndex);
+      } else {
+        reviewState.set(rootIndex, state);
+        scheduleReview(rootIndex, state.stage - 1);
+      }
+      updateProgress();
+    }
+
     function applyWrong(item) {
       updateStats();
       inputWrap.classList.add('is-error');
@@ -633,9 +770,10 @@
 
     function triggerWrong() {
       if (locked) return;
-      const item = activeRoots[order[currentIndex]];
+      const item = activeRoots[currentItemIndex];
       locked = true;
       total += 1;
+      markWrong(currentItemIndex);
       applyWrong(item);
     }
 
@@ -677,6 +815,26 @@
       }
     }
 
+    function updateReviewButtons() {
+      if (reviewOffBtn) {
+        reviewOffBtn.classList.toggle('is-active', !reviewEnabled);
+        reviewOffBtn.setAttribute('aria-pressed', String(!reviewEnabled));
+      }
+      if (reviewOnBtn) {
+        reviewOnBtn.classList.toggle('is-active', reviewEnabled);
+        reviewOnBtn.setAttribute('aria-pressed', String(reviewEnabled));
+      }
+    }
+
+    function setReviewEnabled(nextEnabled) {
+      if (nextEnabled === reviewEnabled) return;
+      reviewEnabled = nextEnabled;
+      if (!reviewEnabled) {
+        clearReviewState();
+      }
+      updateReviewButtons();
+    }
+
     function setMode(nextMode) {
       if (nextMode === mode) return;
       const completed = getCompletedIndices();
@@ -688,6 +846,9 @@
       }
       mode = nextMode;
       activeRoots = mode === 'merged' ? ROOTS_MERGED : ROOTS_VARIANTS;
+      completedSet.clear();
+      targetCompleted.forEach((idx) => completedSet.add(idx));
+      clearReviewState();
       buildOrderWithCompleted(targetCompleted);
       renderQuestion();
       updateModeButtons();
@@ -695,8 +856,8 @@
 
     function updateProgress() {
       if (!progressInfoEl) return;
-      const totalItems = order.length || 0;
-      const current = totalItems ? (currentIndex + 1) : 0;
+      const totalItems = activeRoots.length || 0;
+      const current = totalItems ? completedSet.size : 0;
       progressInfoEl.textContent = `${current}/${totalItems}`;
     }
 
@@ -717,10 +878,8 @@
     }
 
     function renderQuestion(options = {}) {
-      if (currentIndex >= order.length) {
-        buildOrder();
-      }
-      const item = activeRoots[order[currentIndex]];
+      pickNextItem();
+      const item = activeRoots[currentItemIndex];
       rootChar.textContent = item.root;
       inputWrap.classList.remove('is-error');
       hideReveal();
@@ -729,12 +888,13 @@
       if (!options.keepStatus) {
         setIdleStatus();
       }
+      turn += 1;
       codeInput.focus();
     }
 
     function submitAnswer(value) {
       if (locked) return;
-      const item = activeRoots[order[currentIndex]];
+      const item = activeRoots[currentItemIndex];
       const code = value.slice(0, 2);
       if (code.length < 2) return;
 
@@ -744,13 +904,17 @@
       if (code === item.code) {
         correct += 1;
         updateStats();
+        markCorrect(currentItemIndex);
         inputWrap.classList.remove('is-error');
         hideReveal();
         flashStatus('正确 ✓', 'good');
-        currentIndex += 1;
+        if (!currentIsReview) {
+          currentIndex += 1;
+        }
         locked = false;
         renderQuestion({ keepStatus: true });
       } else {
+        markWrong(currentItemIndex);
         applyWrong(item);
       }
     }
@@ -803,6 +967,11 @@
       modeMergedBtn.addEventListener('click', () => setMode('merged'));
     }
 
+    if (reviewOffBtn && reviewOnBtn) {
+      reviewOffBtn.addEventListener('click', () => setReviewEnabled(false));
+      reviewOnBtn.addEventListener('click', () => setReviewEnabled(true));
+    }
+
     if (sizeDownBtn && sizeUpBtn) {
       sizeDownBtn.addEventListener('click', () => {
         sizeIndex = Math.max(0, sizeIndex - 1);
@@ -815,6 +984,7 @@
     }
     applySize();
     updateModeButtons();
+    updateReviewButtons();
 
     const CURSOR_HIDE_DELAY = 1500;
     let cursorTimer = null;
