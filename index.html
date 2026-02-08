@@ -512,8 +512,8 @@
     let reviewQueue = [];
     const reviewState = new Map();
     const completedSet = new Set();
-    const seenByMode = { all: new Set(), merged: new Set() };
-    let seenSet = seenByMode.all;
+    const learningSeenByMode = { all: new Set(), merged: new Set() };
+    let learningSeenSet = learningSeenByMode.all;
     const REVIEW_STEPS = [2, 5, 10];
     let turn = 0;
 
@@ -735,8 +735,8 @@
     }
 
     function registerSeen(idx) {
-      if (seenSet.has(idx)) return false;
-      seenSet.add(idx);
+      if (learningSeenSet.has(idx)) return false;
+      learningSeenSet.add(idx);
       return true;
     }
 
@@ -745,8 +745,9 @@
     }
 
     function handleLearningIntro(item) {
+      if (!learningMode) return;
       const firstSeen = registerSeen(currentItemIndex);
-      if (!learningMode || !firstSeen || currentIsReview) return;
+      if (!firstSeen) return;
       markWrong(currentItemIndex);
       applyLearningIntro(item);
     }
@@ -892,6 +893,8 @@
       practiceMode = nextMode;
       syncPracticeState(nextMode);
       updatePracticeButtons();
+      locked = false;
+      renderCurrent();
     }
 
     function setMode(nextMode) {
@@ -905,7 +908,7 @@
       }
       mode = nextMode;
       activeRoots = mode === 'merged' ? ROOTS_MERGED : ROOTS_VARIANTS;
-      seenSet = mode === 'merged' ? seenByMode.merged : seenByMode.all;
+      learningSeenSet = mode === 'merged' ? learningSeenByMode.merged : learningSeenByMode.all;
       completedSet.clear();
       targetCompleted.forEach((idx) => completedSet.add(idx));
       clearReviewState();
@@ -937,8 +940,7 @@
       setTimeout(() => inputWrap.classList.remove('shake'), 260);
     }
 
-    function renderQuestion(options = {}) {
-      pickNextItem();
+    function renderCurrent(options = {}) {
       const item = activeRoots[currentItemIndex];
       rootChar.textContent = item.root;
       inputWrap.classList.remove('is-error');
@@ -950,8 +952,13 @@
       }
       handleLearningIntro(item);
       handleFollowIntro(item);
-      turn += 1;
       codeInput.focus();
+    }
+
+    function renderQuestion(options = {}) {
+      pickNextItem();
+      renderCurrent(options);
+      turn += 1;
     }
 
     function submitAnswer(value) {
