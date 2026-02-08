@@ -523,7 +523,20 @@
     }
 
     .practice-wrong .stat-accuracy,
-    .practice-wrong .stat-progress {
+    .practice-wrong .stat-progress,
+    .practice-wrong .stat-crown {
+      display: none;
+    }
+
+    .stat-crown {
+      margin-top: 2px;
+      font-size: 12px;
+      line-height: 1;
+      color: var(--accent);
+      flex-basis: 100%;
+    }
+
+    .stat-crown.is-empty {
       display: none;
     }
 
@@ -971,6 +984,7 @@
       <div class="card-meta">
         <div class="stat stat-accuracy">准确率：<strong id="accuracy">0%</strong></div>
         <div class="stat stat-progress">进度：<strong id="progressInfo">0/0</strong></div>
+        <div class="stat stat-crown is-empty" id="roundCrown"></div>
         <div class="stat stat-wrong">错题进度：<strong id="wrongProgress">0/0</strong></div>
       </div>
       <div class="root-char" id="rootChar">?</div>
@@ -1013,6 +1027,7 @@
     const accuracyEl = document.getElementById('accuracy');
     const progressInfoEl = document.getElementById('progressInfo');
     const wrongProgressInfoEl = document.getElementById('wrongProgress');
+    const roundCrownEl = document.getElementById('roundCrown');
     const modeAllBtn = document.getElementById('modeAll');
     const modeMergedBtn = document.getElementById('modeMerged');
     const reviewOffBtn = document.getElementById('reviewOff');
@@ -1054,6 +1069,7 @@
     let wrongSet = wrongByMode.all;
     const wrongProgressByMode = { all: new Set(), merged: new Set() };
     let wrongProgressSet = wrongProgressByMode.all;
+    const roundsByMode = { all: 0, merged: 0 };
     const learningSeenByMode = { all: new Set(), merged: new Set() };
     let learningSeenSet = learningSeenByMode.all;
     const REVIEW_STEPS = [2, 5, 10];
@@ -1562,6 +1578,9 @@
     }
 
     function handleProgressReset() {
+      if (practiceMode !== 'wrong') {
+        roundsByMode[mode] = (roundsByMode[mode] || 0) + 1;
+      }
       if (paletteMode !== 'auto') return;
       const currentIndex = paletteOptions.indexOf(activePalette);
       autoPaletteBaseIndex = currentIndex >= 0 ? currentIndex : 0;
@@ -1636,6 +1655,12 @@
           wrongDone = 0;
         }
         wrongProgressInfoEl.textContent = `${wrongDone}/${wrongSet.size}`;
+      }
+      if (roundCrownEl) {
+        const rounds = roundsByMode[mode] || 0;
+        const crownText = rounds <= 0 ? '' : rounds === 1 ? '👑' : `👑×${rounds}`;
+        roundCrownEl.textContent = crownText;
+        roundCrownEl.classList.toggle('is-empty', rounds <= 0);
       }
       maybeAutoPalette();
     }
