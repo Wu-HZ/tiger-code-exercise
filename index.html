@@ -514,6 +514,19 @@
       display: none;
     }
 
+    .stat-wrong {
+      display: none;
+    }
+
+    .practice-wrong .stat-wrong {
+      display: flex;
+    }
+
+    .practice-wrong .stat-accuracy,
+    .practice-wrong .stat-progress {
+      display: none;
+    }
+
     .stat strong {
       color: var(--ink);
     }
@@ -957,7 +970,8 @@
     <section class="card" id="card">
       <div class="card-meta">
         <div class="stat stat-accuracy">准确率：<strong id="accuracy">0%</strong></div>
-        <div class="stat">进度：<strong id="progressInfo">0/0</strong></div>
+        <div class="stat stat-progress">进度：<strong id="progressInfo">0/0</strong></div>
+        <div class="stat stat-wrong">错题进度：<strong id="wrongProgress">0/0</strong></div>
       </div>
       <div class="root-char" id="rootChar">?</div>
       <div class="reveal" id="reveal" aria-live="polite"></div>
@@ -998,6 +1012,7 @@
     const correctEl = document.getElementById('correct');
     const accuracyEl = document.getElementById('accuracy');
     const progressInfoEl = document.getElementById('progressInfo');
+    const wrongProgressInfoEl = document.getElementById('wrongProgress');
     const modeAllBtn = document.getElementById('modeAll');
     const modeMergedBtn = document.getElementById('modeMerged');
     const reviewOffBtn = document.getElementById('reviewOff');
@@ -1037,6 +1052,8 @@
     const completedSet = new Set();
     const wrongByMode = { all: new Set(), merged: new Set() };
     let wrongSet = wrongByMode.all;
+    const wrongProgressByMode = { all: new Set(), merged: new Set() };
+    let wrongProgressSet = wrongProgressByMode.all;
     const learningSeenByMode = { all: new Set(), merged: new Set() };
     let learningSeenSet = learningSeenByMode.all;
     const REVIEW_STEPS = [2, 5, 10];
@@ -1334,6 +1351,7 @@
 
     function markWrong(rootIndex) {
       wrongSet.add(rootIndex);
+      wrongProgressSet.delete(rootIndex);
       if (reviewEnabled) {
         completedSet.delete(rootIndex);
         const state = reviewState.get(rootIndex) || { stage: 0 };
@@ -1345,29 +1363,32 @@
     }
 
     function markCorrect(rootIndex) {
+      let mastered = false;
       if (!reviewEnabled) {
         completedSet.add(rootIndex);
-        updateProgress();
-        return;
-      }
-
-      const state = reviewState.get(rootIndex);
-      if (!state) {
-        completedSet.add(rootIndex);
-        updateProgress();
-        return;
-      }
-
-      state.stage += 1;
-      if (state.stage >= REVIEW_STEPS.length) {
-        reviewState.delete(rootIndex);
-        removeFromReviewQueue(rootIndex);
-        completedSet.add(rootIndex);
+        mastered = true;
       } else {
-        reviewState.set(rootIndex, state);
-        scheduleReview(rootIndex, state.stage - 1);
+        const state = reviewState.get(rootIndex);
+        if (!state) {
+          completedSet.add(rootIndex);
+          mastered = true;
+        } else {
+          state.stage += 1;
+          if (state.stage >= REVIEW_STEPS.length) {
+            reviewState.delete(rootIndex);
+            removeFromReviewQueue(rootIndex);
+            completedSet.add(rootIndex);
+            mastered = true;
+          } else {
+            reviewState.set(rootIndex, state);
+            scheduleReview(rootIndex, state.stage - 1);
+          }
+        }
       }
       updateProgress();
+      if (mastered && wrongSet.has(rootIndex)) {
+        wrongProgressSet.add(rootIndex);
+      }
     }
 
     function applyWrong(item) {
@@ -1459,6 +1480,7 @@
     function syncPracticeState(nextMode) {
       const nextReviewEnabled = nextMode === 'normal' || nextMode === 'learning' || nextMode === 'wrong';
       const nextLearningMode = nextMode === 'learning';
+      document.body.classList.toggle('practice-wrong', nextMode === 'wrong');
       if (reviewEnabled !== nextReviewEnabled) {
         reviewEnabled = nextReviewEnabled;
         if (!reviewEnabled) {
@@ -1587,6 +1609,7 @@
       activeRoots = mode === 'merged' ? ROOTS_MERGED : ROOTS_VARIANTS;
       learningSeenSet = mode === 'merged' ? learningSeenByMode.merged : learningSeenByMode.all;
       wrongSet = mode === 'merged' ? wrongByMode.merged : wrongByMode.all;
+      wrongProgressSet = mode === 'merged' ? wrongProgressByMode.merged : wrongProgressByMode.all;
       completedSet.clear();
       targetCompleted.forEach((idx) => completedSet.add(idx));
       clearReviewState();
@@ -1600,6 +1623,19 @@
       const current = totalItems ? completedSet.size : 0;
       if (progressInfoEl) {
         progressInfoEl.textContent = `${current}/${totalItems}`;
+      }
+      if (wrongProgressInfoEl) {
+        let wrongDone = 0;
+        if (wrongProgressSet.size) {
+          wrongProgressSet.forEach((idx) => {
+            if (wrongSet.has(idx)) wrongDone += 1;
+          });
+        }
+        if (practiceMode === 'wrong' && wrongSet.size > 0 && wrongDone >= wrongSet.size) {
+          wrongProgressSet.clear();
+          wrongDone = 0;
+        }
+        wrongProgressInfoEl.textContent = `${wrongDone}/${wrongSet.size}`;
       }
       maybeAutoPalette();
     }
