@@ -922,6 +922,7 @@
           </div>
           <label class="palette-select" aria-label="配色">
             <select id="paletteSelect" aria-label="配色">
+              <option value="auto">Auto</option>
               <option value="solarized">Solarized</option>
               <option value="nord">Nord</option>
               <option value="catppuccin">Catppuccin</option>
@@ -1026,7 +1027,8 @@
     let learningMode = practiceMode === 'learning';
     let uiMode = 'show';
     let schemeMode = 'light';
-    let paletteMode = 'solarized';
+    let paletteMode = 'auto';
+    let activePalette = 'solarized';
     let reviewQueue = [];
     const reviewState = new Map();
     const completedSet = new Set();
@@ -1457,6 +1459,8 @@
       }
     }
 
+    const paletteOptions = ['solarized', 'nord', 'catppuccin', 'gruvbox', 'tokyonight', 'rosepine', 'one'];
+
     function updatePaletteSelect() {
       if (!paletteSelect) return;
       paletteSelect.value = paletteMode;
@@ -1468,12 +1472,31 @@
       updateThemeButtons();
     }
 
+    function getAutoPalette() {
+      const bucket = Math.floor((completedSet.size || 0) / 100);
+      return paletteOptions[bucket % paletteOptions.length];
+    }
+
+    function applyPalette(name) {
+      activePalette = name;
+      paletteOptions.forEach((palette) => {
+        document.body.classList.toggle(`theme-${palette}`, palette === name);
+      });
+    }
+
     function setPaletteMode(nextMode) {
       paletteMode = nextMode;
-      const palettes = ['solarized', 'nord', 'catppuccin', 'gruvbox', 'tokyonight', 'rosepine', 'one'];
-      palettes.forEach((name) => {
-        document.body.classList.toggle(`theme-${name}`, name === paletteMode);
-      });
+      const target = paletteMode === 'auto' ? getAutoPalette() : paletteMode;
+      applyPalette(target);
+      updatePaletteSelect();
+    }
+
+    function maybeAutoPalette() {
+      if (paletteMode !== 'auto') return;
+      const target = getAutoPalette();
+      if (target !== activePalette) {
+        applyPalette(target);
+      }
       updatePaletteSelect();
     }
 
@@ -1498,10 +1521,12 @@
     }
 
     function updateProgress() {
-      if (!progressInfoEl) return;
       const totalItems = activeRoots.length || 0;
       const current = totalItems ? completedSet.size : 0;
-      progressInfoEl.textContent = `${current}/${totalItems}`;
+      if (progressInfoEl) {
+        progressInfoEl.textContent = `${current}/${totalItems}`;
+      }
+      maybeAutoPalette();
     }
 
     function flashStatus(text, state) {
