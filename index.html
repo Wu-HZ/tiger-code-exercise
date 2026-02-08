@@ -100,6 +100,13 @@
       font-size: 14px;
     }
 
+    .side-controls {
+      display: inline-flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
     .learning-mode .stat-attempts,
     .learning-mode .stat-correct,
     .learning-mode .stat-accuracy {
@@ -247,6 +254,34 @@
       right: -120px;
       filter: blur(2px);
       z-index: 0;
+    }
+
+    .ui-half .footer,
+    .ui-full .footer {
+      display: none;
+    }
+
+    .ui-half header .title,
+    .ui-full header .title,
+    .ui-half header .controls,
+    .ui-full header .controls {
+      display: none;
+    }
+
+    .ui-full .card-meta {
+      display: none;
+    }
+
+    .ui-full .card {
+      background: transparent;
+      border-color: transparent;
+      box-shadow: none;
+      padding: 0;
+      min-height: auto;
+    }
+
+    .ui-full .card::before {
+      content: none;
     }
 
     .card-meta {
@@ -429,6 +464,7 @@
     @media (max-width: 600px) {
       .card { padding: 22px 16px; }
       .top-meta { gap: 10px; }
+      .side-controls { gap: 8px; }
       .code-box { width: var(--box-size-mobile); height: var(--box-size-mobile); font-size: var(--box-font-mobile); }
       .footer-row--legal {
         grid-template-columns: 1fr;
@@ -445,9 +481,16 @@
     <header>
       <div class="title">虎码字根练习</div>
       <div class="top-meta">
-        <div class="size-controls">
-          <button class="size-btn" id="sizeDown" type="button" aria-label="缩小">小</button>
-          <button class="size-btn" id="sizeUp" type="button" aria-label="放大">大</button>
+        <div class="side-controls">
+          <div class="size-controls">
+            <button class="size-btn" id="sizeDown" type="button" aria-label="缩小">小</button>
+            <button class="size-btn" id="sizeUp" type="button" aria-label="放大">大</button>
+          </div>
+          <div class="mode-switch" role="group" aria-label="界面显示">
+            <button class="mode-btn is-active" id="uiShow" type="button" aria-pressed="true">不隐</button>
+            <button class="mode-btn" id="uiHalf" type="button" aria-pressed="false">半隐</button>
+            <button class="mode-btn" id="uiFull" type="button" aria-pressed="false">全隐</button>
+          </div>
         </div>
         <div class="controls">
           <div class="mode-switch" role="group" aria-label="字根模式">
@@ -514,6 +557,9 @@
     const reviewOnBtn = document.getElementById('reviewOn');
     const reviewLearnBtn = document.getElementById('reviewLearn');
     const reviewFollowBtn = document.getElementById('reviewFollow');
+    const uiShowBtn = document.getElementById('uiShow');
+    const uiHalfBtn = document.getElementById('uiHalf');
+    const uiFullBtn = document.getElementById('uiFull');
     const sizeDownBtn = document.getElementById('sizeDown');
     const sizeUpBtn = document.getElementById('sizeUp');
 
@@ -530,6 +576,7 @@
     let practiceMode = 'normal';
     let reviewEnabled = practiceMode !== 'review';
     let learningMode = practiceMode === 'learning';
+    let uiMode = 'show';
     let reviewQueue = [];
     const reviewState = new Map();
     const completedSet = new Set();
@@ -638,11 +685,15 @@
     }
 
     const sizePresets = [
-      { rootMin: 22, rootVw: '3.25vw', rootMax: 40, box: 30, boxFont: 16, boxMobile: 26, boxMobileFont: 14 },
+      { rootMin: 18, rootVw: '2.6vw', rootMax: 34, box: 24, boxFont: 14, boxMobile: 20, boxMobileFont: 12 },
+      { rootMin: 20, rootVw: '2.9vw', rootMax: 38, box: 27, boxFont: 15, boxMobile: 23, boxMobileFont: 13 },
+      { rootMin: 22, rootVw: '3.2vw', rootMax: 40, box: 30, boxFont: 16, boxMobile: 26, boxMobileFont: 14 },
       { rootMin: 24, rootVw: '3.5vw', rootMax: 44, box: 34, boxFont: 18, boxMobile: 30, boxMobileFont: 16 },
-      { rootMin: 26, rootVw: '4vw', rootMax: 48, box: 38, boxFont: 20, boxMobile: 34, boxMobileFont: 18 }
+      { rootMin: 26, rootVw: '3.8vw', rootMax: 48, box: 38, boxFont: 20, boxMobile: 34, boxMobileFont: 18 },
+      { rootMin: 28, rootVw: '4.1vw', rootMax: 52, box: 42, boxFont: 22, boxMobile: 38, boxMobileFont: 20 },
+      { rootMin: 30, rootVw: '4.4vw', rootMax: 56, box: 46, boxFont: 24, boxMobile: 42, boxMobileFont: 22 }
     ];
-    let sizeIndex = 1;
+    let sizeIndex = 3;
 
     function applySize() {
       const preset = sizePresets[sizeIndex];
@@ -918,6 +969,31 @@
       renderCurrent();
     }
 
+    function updateUiButtons() {
+      if (uiShowBtn) {
+        const active = uiMode === 'show';
+        uiShowBtn.classList.toggle('is-active', active);
+        uiShowBtn.setAttribute('aria-pressed', String(active));
+      }
+      if (uiHalfBtn) {
+        const active = uiMode === 'half';
+        uiHalfBtn.classList.toggle('is-active', active);
+        uiHalfBtn.setAttribute('aria-pressed', String(active));
+      }
+      if (uiFullBtn) {
+        const active = uiMode === 'full';
+        uiFullBtn.classList.toggle('is-active', active);
+        uiFullBtn.setAttribute('aria-pressed', String(active));
+      }
+    }
+
+    function setUiMode(nextMode) {
+      uiMode = nextMode;
+      document.body.classList.toggle('ui-half', uiMode === 'half');
+      document.body.classList.toggle('ui-full', uiMode === 'full');
+      updateUiButtons();
+    }
+
     function setMode(nextMode) {
       if (nextMode === mode) return;
       const completed = getCompletedIndices();
@@ -1068,6 +1144,12 @@
       reviewFollowBtn.addEventListener('click', () => setPracticeMode('follow'));
     }
 
+    if (uiShowBtn && uiHalfBtn && uiFullBtn) {
+      uiShowBtn.addEventListener('click', () => setUiMode('show'));
+      uiHalfBtn.addEventListener('click', () => setUiMode('half'));
+      uiFullBtn.addEventListener('click', () => setUiMode('full'));
+    }
+
     if (sizeDownBtn && sizeUpBtn) {
       sizeDownBtn.addEventListener('click', () => {
         sizeIndex = Math.max(0, sizeIndex - 1);
@@ -1082,6 +1164,7 @@
     updateModeButtons();
     syncPracticeState(practiceMode);
     updatePracticeButtons();
+    setUiMode(uiMode);
 
     const CURSOR_HIDE_DELAY = 1500;
     let cursorTimer = null;
