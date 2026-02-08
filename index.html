@@ -497,7 +497,7 @@
       gap: 16px;
       align-items: center;
       color: var(--muted);
-      font-size: 14px;
+      font-size: 18px;
     }
 
     .side-controls {
@@ -530,7 +530,7 @@
 
     .stat-crown {
       margin-top: 2px;
-      font-size: 12px;
+      font-size: 18px;
       line-height: 1;
       color: var(--accent);
       flex-basis: 100%;
@@ -538,6 +538,11 @@
 
     .stat-crown.is-empty {
       display: none;
+    }
+
+    .stat-timer {
+      flex-basis: 100%;
+      margin-top: 2px;
     }
 
     .stat strong {
@@ -985,6 +990,7 @@
         <div class="stat stat-accuracy">准确率：<strong id="accuracy">0%</strong></div>
         <div class="stat stat-progress">进度：<strong id="progressInfo">0/0</strong></div>
         <div class="stat stat-crown is-empty" id="roundCrown"></div>
+        <div class="stat stat-timer">计时：<strong id="timer">00:00</strong></div>
         <div class="stat stat-wrong">错题进度：<strong id="wrongProgress">0/0</strong></div>
       </div>
       <div class="root-char" id="rootChar">?</div>
@@ -1028,6 +1034,7 @@
     const progressInfoEl = document.getElementById('progressInfo');
     const wrongProgressInfoEl = document.getElementById('wrongProgress');
     const roundCrownEl = document.getElementById('roundCrown');
+    const timerEl = document.getElementById('timer');
     const modeAllBtn = document.getElementById('modeAll');
     const modeMergedBtn = document.getElementById('modeMerged');
     const reviewOffBtn = document.getElementById('reviewOff');
@@ -1070,6 +1077,13 @@
     const wrongProgressByMode = { all: new Set(), merged: new Set() };
     let wrongProgressSet = wrongProgressByMode.all;
     const roundsByMode = { all: 0, merged: 0 };
+    const TIMER_IDLE_MS = 5000;
+    const TIMER_TICK_MS = 250;
+    let timerRunning = false;
+    let timerStart = 0;
+    let timerElapsed = 0;
+    let lastKeyAt = 0;
+    let timerInterval = null;
     const learningSeenByMode = { all: new Set(), merged: new Set() };
     let learningSeenSet = learningSeenByMode.all;
     const REVIEW_STEPS = [2, 5, 10];
@@ -1665,6 +1679,46 @@
       maybeAutoPalette();
     }
 
+    function formatTimer(ms) {
+      const totalSeconds = Math.floor(ms / 1000);
+      const hours = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = totalSeconds % 60;
+      if (hours > 0) {
+        return `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+      }
+      return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
+
+    function updateTimerDisplay() {
+      if (!timerEl) return;
+      const total = timerElapsed + (timerRunning ? Date.now() - timerStart : 0);
+      timerEl.textContent = formatTimer(total);
+    }
+
+    function pauseTimer() {
+      if (!timerRunning) return;
+      timerElapsed += Date.now() - timerStart;
+      timerRunning = false;
+      timerStart = 0;
+    }
+
+    function registerActivity() {
+      const now = Date.now();
+      lastKeyAt = now;
+      if (!timerRunning) {
+        timerRunning = true;
+        timerStart = now;
+      }
+    }
+
+    function tickTimer() {
+      if (timerRunning && Date.now() - lastKeyAt >= TIMER_IDLE_MS) {
+        pauseTimer();
+      }
+      updateTimerDisplay();
+    }
+
     function flashStatus(text, state) {
       if (!statusEl) return;
       statusEl.textContent = text;
@@ -1743,6 +1797,7 @@
     });
 
     codeInput.addEventListener('keydown', (e) => {
+      registerActivity();
       if (e.key === 'Enter') {
         submitAnswer(buffer);
         return;
@@ -1755,6 +1810,7 @@
 
     document.addEventListener('keydown', (e) => {
       if (document.activeElement === codeInput) return;
+      registerActivity();
       if (locked) return;
       if (e.key === 'Backspace') {
         e.preventDefault();
@@ -1853,6 +1909,8 @@
     document.addEventListener('mousedown', resetCursorTimer, { passive: true });
     document.addEventListener('wheel', resetCursorTimer, { passive: true });
     resetCursorTimer();
+    updateTimerDisplay();
+    timerInterval = setInterval(tickTimer, TIMER_TICK_MS);
 
     buildOrder();
     renderQuestion();
