@@ -100,6 +100,12 @@
       font-size: 14px;
     }
 
+    .learning-mode .stat-attempts,
+    .learning-mode .stat-correct,
+    .learning-mode .stat-accuracy {
+      display: none;
+    }
+
     .stat strong {
       color: var(--ink);
     }
@@ -417,9 +423,9 @@
     <header>
       <div class="title">虎码字根练习</div>
       <div class="top-meta">
-        <div class="stat">尝试：<strong id="progress">0</strong></div>
-        <div class="stat">正确：<strong id="correct">0</strong></div>
-        <div class="stat">准确率：<strong id="accuracy">0%</strong></div>
+        <div class="stat stat-attempts">尝试：<strong id="progress">0</strong></div>
+        <div class="stat stat-correct">正确：<strong id="correct">0</strong></div>
+        <div class="stat stat-accuracy">准确率：<strong id="accuracy">0%</strong></div>
         <div class="stat">进度：<strong id="progressInfo">0/0</strong></div>
         <div class="status" id="status" data-state="idle">等待输入</div>
         <div class="controls">
@@ -427,7 +433,8 @@
             <button class="mode-btn is-active" id="modeAll" type="button" aria-pressed="true">全字根</button>
             <button class="mode-btn" id="modeMerged" type="button" aria-pressed="false">归并字根</button>
           </div>
-          <div class="mode-switch" role="group" aria-label="遗忘曲线">
+          <div class="mode-switch" role="group" aria-label="练习模式">
+            <button class="mode-btn" id="reviewLearn" type="button" aria-pressed="false">学习</button>
             <button class="mode-btn is-active" id="reviewOff" type="button" aria-pressed="true">普通</button>
             <button class="mode-btn" id="reviewOn" type="button" aria-pressed="false">复习</button>
           </div>
@@ -483,6 +490,7 @@
     const modeMergedBtn = document.getElementById('modeMerged');
     const reviewOffBtn = document.getElementById('reviewOff');
     const reviewOnBtn = document.getElementById('reviewOn');
+    const reviewLearnBtn = document.getElementById('reviewLearn');
     const sizeDownBtn = document.getElementById('sizeDown');
     const sizeUpBtn = document.getElementById('sizeUp');
 
@@ -496,10 +504,14 @@
     let buffer = '';
     let mode = 'all';
     let activeRoots = ROOTS_VARIANTS;
-    let reviewEnabled = true;
+    let practiceMode = 'normal';
+    let reviewEnabled = practiceMode !== 'review';
+    let learningMode = practiceMode === 'learning';
     let reviewQueue = [];
     const reviewState = new Map();
     const completedSet = new Set();
+    const seenByMode = { all: new Set(), merged: new Set() };
+    let seenSet = seenByMode.all;
     const REVIEW_STEPS = [2, 5, 10];
     let turn = 0;
 
@@ -720,6 +732,23 @@
       revealEl.classList.remove('is-show');
     }
 
+    function registerSeen(idx) {
+      if (seenSet.has(idx)) return false;
+      seenSet.add(idx);
+      return true;
+    }
+
+    function applyLearningIntro(item) {
+      showReveal(item.code);
+    }
+
+    function handleLearningIntro(item) {
+      const firstSeen = registerSeen(currentItemIndex);
+      if (!learningMode || !firstSeen || currentIsReview) return;
+      markWrong(currentItemIndex);
+      applyLearningIntro(item);
+    }
+
     function markWrong(rootIndex) {
       if (reviewEnabled) {
         completedSet.delete(rootIndex);
@@ -815,24 +844,42 @@
       }
     }
 
-    function updateReviewButtons() {
+    function updatePracticeButtons() {
       if (reviewOffBtn) {
-        reviewOffBtn.classList.toggle('is-active', reviewEnabled);
-        reviewOffBtn.setAttribute('aria-pressed', String(reviewEnabled));
+        const active = practiceMode === 'normal';
+        reviewOffBtn.classList.toggle('is-active', active);
+        reviewOffBtn.setAttribute('aria-pressed', String(active));
       }
       if (reviewOnBtn) {
-        reviewOnBtn.classList.toggle('is-active', !reviewEnabled);
-        reviewOnBtn.setAttribute('aria-pressed', String(!reviewEnabled));
+        const active = practiceMode === 'review';
+        reviewOnBtn.classList.toggle('is-active', active);
+        reviewOnBtn.setAttribute('aria-pressed', String(active));
+      }
+      if (reviewLearnBtn) {
+        const active = practiceMode === 'learning';
+        reviewLearnBtn.classList.toggle('is-active', active);
+        reviewLearnBtn.setAttribute('aria-pressed', String(active));
       }
     }
 
-    function setReviewEnabled(nextEnabled) {
-      if (nextEnabled === reviewEnabled) return;
-      reviewEnabled = nextEnabled;
-      if (!reviewEnabled) {
-        clearReviewState();
+    function syncPracticeState(nextMode) {
+      const nextReviewEnabled = nextMode !== 'review';
+      const nextLearningMode = nextMode === 'learning';
+      if (reviewEnabled !== nextReviewEnabled) {
+        reviewEnabled = nextReviewEnabled;
+        if (!reviewEnabled) {
+          clearReviewState();
+        }
       }
-      updateReviewButtons();
+      learningMode = nextLearningMode;
+      document.body.classList.toggle('learning-mode', learningMode);
+    }
+
+    function setPracticeMode(nextMode) {
+      if (nextMode === practiceMode) return;
+      practiceMode = nextMode;
+      syncPracticeState(nextMode);
+      updatePracticeButtons();
     }
 
     function setMode(nextMode) {
@@ -846,6 +893,7 @@
       }
       mode = nextMode;
       activeRoots = mode === 'merged' ? ROOTS_MERGED : ROOTS_VARIANTS;
+      seenSet = mode === 'merged' ? seenByMode.merged : seenByMode.all;
       completedSet.clear();
       targetCompleted.forEach((idx) => completedSet.add(idx));
       clearReviewState();
@@ -888,6 +936,7 @@
       if (!options.keepStatus) {
         setIdleStatus();
       }
+      handleLearningIntro(item);
       turn += 1;
       codeInput.focus();
     }
@@ -967,9 +1016,10 @@
       modeMergedBtn.addEventListener('click', () => setMode('merged'));
     }
 
-    if (reviewOffBtn && reviewOnBtn) {
-      reviewOffBtn.addEventListener('click', () => setReviewEnabled(true));
-      reviewOnBtn.addEventListener('click', () => setReviewEnabled(false));
+    if (reviewOffBtn && reviewOnBtn && reviewLearnBtn) {
+      reviewOffBtn.addEventListener('click', () => setPracticeMode('normal'));
+      reviewOnBtn.addEventListener('click', () => setPracticeMode('review'));
+      reviewLearnBtn.addEventListener('click', () => setPracticeMode('learning'));
     }
 
     if (sizeDownBtn && sizeUpBtn) {
@@ -984,7 +1034,8 @@
     }
     applySize();
     updateModeButtons();
-    updateReviewButtons();
+    syncPracticeState(practiceMode);
+    updatePracticeButtons();
 
     const CURSOR_HIDE_DELAY = 1500;
     let cursorTimer = null;
