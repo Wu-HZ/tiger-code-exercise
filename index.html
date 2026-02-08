@@ -258,14 +258,16 @@
 
     .ui-half .footer,
     .ui-full .footer {
-      display: none;
+      visibility: hidden;
+      pointer-events: none;
     }
 
     .ui-half header .title,
     .ui-full header .title,
     .ui-half header .controls,
     .ui-full header .controls {
-      display: none;
+      visibility: hidden;
+      pointer-events: none;
     }
 
     .ui-full .card-meta {
@@ -276,8 +278,6 @@
       background: transparent;
       border-color: transparent;
       box-shadow: none;
-      padding: 0;
-      min-height: auto;
     }
 
     .ui-full .card::before {
