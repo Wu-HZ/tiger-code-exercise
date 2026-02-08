@@ -66,6 +66,11 @@
       padding: 28px;
     }
 
+    body.cursor-hidden,
+    body.cursor-hidden * {
+      cursor: none !important;
+    }
+
     .app {
       width: min(980px, 95vw);
       display: grid;
@@ -810,6 +815,33 @@
     }
     applySize();
     updateModeButtons();
+
+    const CURSOR_HIDE_DELAY = 1500;
+    let cursorTimer = null;
+    let cursorHidden = false;
+
+    function hideCursor() {
+      if (cursorHidden) return;
+      document.body.classList.add('cursor-hidden');
+      cursorHidden = true;
+    }
+
+    function showCursor() {
+      if (!cursorHidden) return;
+      document.body.classList.remove('cursor-hidden');
+      cursorHidden = false;
+    }
+
+    function resetCursorTimer() {
+      showCursor();
+      if (cursorTimer) clearTimeout(cursorTimer);
+      cursorTimer = setTimeout(hideCursor, CURSOR_HIDE_DELAY);
+    }
+
+    document.addEventListener('mousemove', resetCursorTimer, { passive: true });
+    document.addEventListener('mousedown', resetCursorTimer, { passive: true });
+    document.addEventListener('wheel', resetCursorTimer, { passive: true });
+    resetCursorTimer();
 
     buildOrder();
     renderQuestion();
