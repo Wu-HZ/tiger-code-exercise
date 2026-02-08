@@ -6,17 +6,17 @@
   <title>虎码字根练习</title>
   <style>
     :root {
-      --bg1: #f7efe3;
-      --bg2: #efe1c7;
-      --ink: #1f2a24;
-      --muted: #5b6a60;
-      --accent: #1f6f5b;
-      --accent-2: #d48b3b;
-      --card: #fff8ef;
-      --line: rgba(31,42,36,0.12);
-      --good: #2e7d32;
-      --bad: #b6452b;
-      --shadow: 0 20px 50px rgba(31,42,36,0.18);
+      --bg1: #fdf6e3;
+      --bg2: #eee8d5;
+      --ink: #586e75;
+      --muted: #839496;
+      --accent: #268bd2;
+      --accent-2: #2aa198;
+      --card: #f7f0e1;
+      --line: rgba(88,110,117,0.2);
+      --good: #859900;
+      --bad: #dc322f;
+      --shadow: 0 20px 50px rgba(88,110,117,0.18);
       --root-min: 24px;
       --root-vw: 3.5vw;
       --root-max: 44px;
@@ -24,6 +24,20 @@
       --box-font: 18px;
       --box-size-mobile: 30px;
       --box-font-mobile: 16px;
+    }
+
+    .theme-dark {
+      --bg1: #002b36;
+      --bg2: #073642;
+      --ink: #eee8d5;
+      --muted: #93a1a1;
+      --accent: #268bd2;
+      --accent-2: #2aa198;
+      --card: #0b3944;
+      --line: rgba(238,232,213,0.16);
+      --good: #859900;
+      --bad: #dc322f;
+      --shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
     }
 
     @font-face {
@@ -56,14 +70,21 @@
     body {
       margin: 0;
       color: var(--ink);
-      background: radial-gradient(1200px 800px at 10% -10%, #fff4dc 0%, transparent 60%),
-                  radial-gradient(900px 900px at 110% 10%, #f0dcc0 0%, transparent 60%),
+      background: radial-gradient(1200px 800px at 10% -10%, rgba(38,139,210,0.12) 0%, transparent 60%),
+                  radial-gradient(900px 900px at 110% 10%, rgba(203,75,22,0.1) 0%, transparent 60%),
                   linear-gradient(160deg, var(--bg1), var(--bg2));
       min-height: 100vh;
       font-family: "Source Han Sans SC", "Microsoft YaHei", "PingFang SC", "Heiti SC", sans-serif;
       display: grid;
       place-items: center;
       padding: 28px;
+    }
+
+    body.theme-dark {
+      background: radial-gradient(1200px 800px at 10% -10%, rgba(38,139,210,0.18) 0%, transparent 60%),
+                  radial-gradient(900px 900px at 110% 10%, rgba(203,75,22,0.16) 0%, transparent 60%),
+                  linear-gradient(160deg, var(--bg1), var(--bg2));
+      color-scheme: dark;
     }
 
     body.cursor-hidden,
@@ -135,7 +156,12 @@
       padding: 3px;
       border-radius: 999px;
       border: 1px solid var(--line);
-      background: rgba(255, 255, 255, 0.65);
+      background: rgba(253, 246, 227, 0.75);
+    }
+
+    body.theme-dark .mode-switch {
+      background: rgba(7, 54, 66, 0.85);
+      border-color: rgba(147, 161, 161, 0.35);
     }
 
     .mode-btn {
@@ -151,8 +177,18 @@
 
     .mode-btn.is-active {
       color: var(--ink);
-      background: #fffdf8;
-      box-shadow: 0 6px 14px rgba(31, 42, 36, 0.12);
+      background: #fdf6e3;
+      box-shadow: 0 6px 14px rgba(88, 110, 117, 0.18);
+    }
+
+    body.theme-dark .mode-btn {
+      color: #93a1a1;
+    }
+
+    body.theme-dark .mode-btn.is-active {
+      color: #eee8d5;
+      background: #0b3944;
+      box-shadow: 0 6px 14px rgba(0, 0, 0, 0.28);
     }
 
     .size-controls {
@@ -163,7 +199,7 @@
 
     .size-btn {
       border: 1px solid var(--line);
-      background: #fffdf8;
+      background: #fdf6e3;
       border-radius: 10px;
       padding: 4px 10px;
       font-size: 12px;
@@ -172,8 +208,8 @@
       transition: border-color 120ms ease, transform 120ms ease, box-shadow 120ms ease;
     }
     .size-btn:hover {
-      border-color: rgba(31,111,91,0.45);
-      box-shadow: 0 6px 14px rgba(31,111,91,0.12);
+      border-color: rgba(38,139,210,0.45);
+      box-shadow: 0 6px 14px rgba(38,139,210,0.16);
       transform: translateY(-1px);
     }
     .size-btn:disabled {
@@ -181,6 +217,17 @@
       cursor: default;
       box-shadow: none;
       transform: none;
+    }
+
+    body.theme-dark .size-btn {
+      color: #eee8d5;
+      background: #073642;
+      border-color: rgba(147, 161, 161, 0.35);
+    }
+
+    body.theme-dark .size-btn:hover {
+      border-color: rgba(147, 161, 161, 0.55);
+      box-shadow: 0 6px 14px rgba(0, 0, 0, 0.28);
     }
 
     .footer {
@@ -227,8 +274,8 @@
     }
 
     .footer-link:hover {
-      color: #185a4a;
-      border-color: rgba(31,111,91,0.5);
+      color: #1f6fa8;
+      border-color: rgba(38,139,210,0.5);
     }
 
     .card {
@@ -253,12 +300,16 @@
       position: absolute;
       width: 260px;
       height: 260px;
-      background: conic-gradient(from 140deg, rgba(212,139,59,0.12), rgba(31,111,91,0.1), rgba(212,139,59,0.12));
+      background: conic-gradient(from 140deg, rgba(38,139,210,0.14), rgba(42,161,152,0.12), rgba(38,139,210,0.14));
       border-radius: 50%;
       top: -120px;
       right: -120px;
       filter: blur(2px);
       z-index: 0;
+    }
+
+    body.theme-dark .card::before {
+      background: conic-gradient(from 140deg, rgba(38,139,210,0.2), rgba(203,75,22,0.18), rgba(38,139,210,0.2));
     }
 
     .ui-half .footer,
@@ -399,7 +450,7 @@
       height: var(--box-size);
       border-radius: 8px;
       border: 1px solid var(--line);
-      background: #fff;
+      background: #fdf6e3;
       display: grid;
       place-items: center;
       font-family: "PdfConsolas", "Consolas", "SFMono-Regular", "Menlo", monospace;
@@ -408,6 +459,13 @@
       text-transform: lowercase;
       color: var(--ink);
       box-shadow: inset 0 0 0 1px rgba(31,42,36,0.02);
+    }
+
+    body.theme-dark .code-box {
+      background: #586e75;
+      border-color: rgba(238, 232, 213, 0.2);
+      color: #fdf6e3;
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12);
     }
 
     .reveal {
@@ -505,6 +563,10 @@
             <button class="size-btn" id="sizeDown" type="button" aria-label="缩小">小</button>
             <button class="size-btn" id="sizeUp" type="button" aria-label="放大">大</button>
           </div>
+          <div class="mode-switch" role="group" aria-label="主题">
+            <button class="mode-btn is-active" id="themeLight" type="button" aria-pressed="true">白</button>
+            <button class="mode-btn" id="themeDark" type="button" aria-pressed="false">黑</button>
+          </div>
           <div class="mode-switch" role="group" aria-label="界面显示">
             <button class="mode-btn is-active" id="uiShow" type="button" aria-pressed="true">不隐</button>
             <button class="mode-btn" id="uiHalf" type="button" aria-pressed="false">半隐</button>
@@ -579,6 +641,8 @@
     const uiShowBtn = document.getElementById('uiShow');
     const uiHalfBtn = document.getElementById('uiHalf');
     const uiFullBtn = document.getElementById('uiFull');
+    const themeLightBtn = document.getElementById('themeLight');
+    const themeDarkBtn = document.getElementById('themeDark');
     const sizeDownBtn = document.getElementById('sizeDown');
     const sizeUpBtn = document.getElementById('sizeUp');
 
@@ -596,6 +660,7 @@
     let reviewEnabled = practiceMode !== 'review';
     let learningMode = practiceMode === 'learning';
     let uiMode = 'show';
+    let themeMode = 'light';
     let reviewQueue = [];
     const reviewState = new Map();
     const completedSet = new Set();
@@ -1013,6 +1078,25 @@
       updateUiButtons();
     }
 
+    function updateThemeButtons() {
+      if (themeLightBtn) {
+        const active = themeMode === 'light';
+        themeLightBtn.classList.toggle('is-active', active);
+        themeLightBtn.setAttribute('aria-pressed', String(active));
+      }
+      if (themeDarkBtn) {
+        const active = themeMode === 'dark';
+        themeDarkBtn.classList.toggle('is-active', active);
+        themeDarkBtn.setAttribute('aria-pressed', String(active));
+      }
+    }
+
+    function setThemeMode(nextMode) {
+      themeMode = nextMode;
+      document.body.classList.toggle('theme-dark', themeMode === 'dark');
+      updateThemeButtons();
+    }
+
     function setMode(nextMode) {
       if (nextMode === mode) return;
       const completed = getCompletedIndices();
@@ -1169,6 +1253,11 @@
       uiFullBtn.addEventListener('click', () => setUiMode('full'));
     }
 
+    if (themeLightBtn && themeDarkBtn) {
+      themeLightBtn.addEventListener('click', () => setThemeMode('light'));
+      themeDarkBtn.addEventListener('click', () => setThemeMode('dark'));
+    }
+
     if (sizeDownBtn && sizeUpBtn) {
       sizeDownBtn.addEventListener('click', () => {
         sizeIndex = Math.max(0, sizeIndex - 1);
@@ -1184,6 +1273,7 @@
     syncPracticeState(practiceMode);
     updatePracticeButtons();
     setUiMode(uiMode);
+    setThemeMode(themeMode);
 
     const CURSOR_HIDE_DELAY = 1500;
     let cursorTimer = null;
