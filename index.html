@@ -496,7 +496,7 @@
     let buffer = '';
     let mode = 'all';
     let activeRoots = ROOTS_VARIANTS;
-    let reviewEnabled = false;
+    let reviewEnabled = true;
     let reviewQueue = [];
     const reviewState = new Map();
     const completedSet = new Set();
@@ -817,12 +817,12 @@
 
     function updateReviewButtons() {
       if (reviewOffBtn) {
-        reviewOffBtn.classList.toggle('is-active', !reviewEnabled);
-        reviewOffBtn.setAttribute('aria-pressed', String(!reviewEnabled));
+        reviewOffBtn.classList.toggle('is-active', reviewEnabled);
+        reviewOffBtn.setAttribute('aria-pressed', String(reviewEnabled));
       }
       if (reviewOnBtn) {
-        reviewOnBtn.classList.toggle('is-active', reviewEnabled);
-        reviewOnBtn.setAttribute('aria-pressed', String(reviewEnabled));
+        reviewOnBtn.classList.toggle('is-active', !reviewEnabled);
+        reviewOnBtn.setAttribute('aria-pressed', String(!reviewEnabled));
       }
     }
 
@@ -968,8 +968,8 @@
     }
 
     if (reviewOffBtn && reviewOnBtn) {
-      reviewOffBtn.addEventListener('click', () => setReviewEnabled(false));
-      reviewOnBtn.addEventListener('click', () => setReviewEnabled(true));
+      reviewOffBtn.addEventListener('click', () => setReviewEnabled(true));
+      reviewOnBtn.addEventListener('click', () => setReviewEnabled(false));
     }
 
     if (sizeDownBtn && sizeUpBtn) {
